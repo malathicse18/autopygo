@@ -1,0 +1,14 @@
+# Ignore .env file
+.env
+
+# Ignore virtual environment directory
+venv/
+
+# Ignore log files
+*.log
+
+# Ignore CSV files
+*.csv
+*.docx
+*.mod
+*.sum

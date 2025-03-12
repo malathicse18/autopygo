@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Task Manager</title>
+  <style>
+    body { font-family: sans-serif; }
+    h1, h2 { text-align: center; }
+    form { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 5px; }
+    input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+    button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+    ul { list-style: none; padding: 0; }
+    li { border: 1px solid #ddd; padding: 10px; margin-bottom: 5px; }
+    .remove-button { background-color: #f44336; color: white; padding: 5px 10px; border: none; text-decoration: none; float: right; }
+  </style>
+</head>
+<body>
+  <h1>Task Manager</h1>
+
+  <div id="actions">
+    <button onclick="showAddTaskForm()">Add Task</button>
+    <button onclick="showListTasks()">List Tasks</button>
+    <button onclick="showRemoveTaskForm()">Remove Task</button>
+  </div>
+
+  <div id="add_task_form" style="display: none;">
+    <h2>Add New Task</h2>
+    <form method="POST" action="/" enctype="multipart/form-data">
+      <label for="task_type">Task Type:</label>
+      <select id="task_type" name="task_type">
+        <option value="organize_files">Organize Files</option>
+        <option value="delete_files">Delete Files</option>
+        <option value="send_email">Send Email</option>
+        <option value="get_gold_rate">Get Gold Rate</option>
+        <option value="convert_file">Convert File</option>
+        <option value="compress_files">Compress Files</option>
+      </select>
+
+      <label for="interval">Interval:</label>
+      <input type="number" id="interval" name="interval" value="1" min="1">
+
+      <label for="unit">Unit:</label>
+      <select id="unit" name="unit">
+        <option value="seconds">Seconds</option>
+        <option value="minutes">Minutes</option>
+        <option value="hours">Hours</option>
+        <option value="days">Days</option>
+      </select>
+
+      <div id="task_specific_fields"></div>
+
+      <button type="submit">Add Task</button>
+    </form>
+  </div>
+
+  <div id="list_tasks" style="display: none;">
+    <h2>Scheduled Tasks</h2>
+    <ul id="task_list">
+      {% for task_name, details in tasks.items() %}
+      <li>
+        {{ task_name }}: {{ details }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div id="remove_task_form" style="display: none;">
+    <h2>Remove Task</h2>
+    <form method="GET" action="/remove_task/">
+      <label for="task_name">Task Name:</label>
+      <input type="text" id="task_name" name="task_name" required>
+      <button type="submit">Remove Task</button>
+    </form>
+  </div>
+
+  <script>
+    const taskTypeSelect = document.getElementById('task_type');
+    const taskSpecificFieldsDiv = document.getElementById('task_specific_fields');
+
+    taskTypeSelect.addEventListener('change', () => {
+        const selectedTaskType = taskTypeSelect.value;
+        taskSpecificFieldsDiv.innerHTML = '';
+
+        if (selectedTaskType === 'organize_files') {
+            taskSpecificFieldsDiv.innerHTML = `
+                <label for="directory">Directory:</label>
+                <input type="text" id="directory" name="directory" required>
+            `;
+        } else if (selectedTaskType === 'delete_files') {
+            taskSpecificFieldsDiv.innerHTML = `
+                <label for="directory">Directory:</label>
+                <input type="text" id="directory" name="directory" required><br>
+                <label for="age_days">Age (Days):</label>
+                <input type="number" id="age_days" name="age_days" required><br>
+                <label for="formats">Formats (comma-separated):</label>
+                <input type="text" id="formats" name="formats" required>
+            `;
+        } else if (selectedTaskType === 'send_email') {
+            taskSpecificFieldsDiv.innerHTML = `
+                <label for="recipient_email">Recipient Email:</label>
+                <input type="email" id="recipient_email" name="recipient_email" required><br>
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" name="subject" required><br>
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" required></textarea><br>
+                <label for="attachments">Attachments:</label>
+                <input type="file" id="attachments" name="attachments" multiple>
+            `;
+        } else if (selectedTaskType === 'convert_file') {
+            taskSpecificFieldsDiv.innerHTML = `
+                <label for="input_dir">Input Directory:</label>
+                <input type="text" id="input_dir" name="input_dir" required><br>
+                <label for="output_dir">Output Directory:</label>
+                <input type="text" id="output_dir" name="output_dir" required><br>
+                <label for="input_format">Input Format:</label>
+                <input type="text" id="input_format" name="input_format" required><br>
+                <label for="output_format">Output Format:</label>
+                <input type="text" id="output_format" name="output_format" required>
+            `;
+        } else if (selectedTaskType === 'compress_files') {
+            taskSpecificFieldsDiv.innerHTML = `
+                <label for="directory">Directory:</label>
+                <input type="text" id="directory" name="directory" required><br>
+                <label for="output_dir">Output Directory:</label>
+                <input type="text" id="output_dir" name="output_dir" required><br>
+                <label for="compression_format">Compression Format:</label>
+                <select id="compression_format" name="compression_format">
+                    <option value="zip">ZIP</option>
+                    <option value="tar">TAR</option>
+                </select>
+            `;
+        }
+    });
+
+    function showAddTaskForm() {
+      document.getElementById('add_task_form').style.display = 'block';
+      document.getElementById('list_tasks').style.display = 'none';
+      document.getElementById('remove_task_form').style.display = 'none';
+    }
+
+    function showListTasks() {
+      document.getElementById('add_task_form').style.display = 'none';
+      document.getElementById('list_tasks').style.display = 'block';
+      document.getElementById('remove_task_form').style.display = 'none';
+    }
+
+    function showRemoveTaskForm() {
+      document.getElementById('add_task_form').style.display = 'none';
+      document.getElementById('list_tasks').style.display = 'none';
+      document.getElementById('remove_task_form').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
