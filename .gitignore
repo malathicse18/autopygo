@@ -8,11 +8,9 @@ venv/
 *.log
 
 # Ignore CSV files
-<<<<<<< HEAD
 *.csv
-*.docx
-*.mod
-*.sum
-=======
-*.csv
->>>>>>> 6af04fc (Initial commit)
+# Ignore Python bytecode cache
+python_cli/__pycache__/
+
+# Ignore specific file inside uploads folder
+python_cli/uploads/*
