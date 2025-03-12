@@ -8,7 +8,11 @@ venv/
 *.log
 
 # Ignore CSV files
+<<<<<<< HEAD
 *.csv
 *.docx
 *.mod
 *.sum
+=======
+*.csv
+>>>>>>> 6af04fc (Initial commit)

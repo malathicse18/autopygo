@@ -1,19 +1,66 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Task Manager</title>
   <style>
-    body { font-family: sans-serif; }
-    h1, h2 { text-align: center; }
-    form { margin-bottom: 20px; }
-    label { display: block; margin-bottom: 5px; }
-    input, select, textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
-    button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
-    ul { list-style: none; padding: 0; }
-    li { border: 1px solid #ddd; padding: 10px; margin-bottom: 5px; }
-    .remove-button { background-color: #f44336; color: white; padding: 5px 10px; border: none; text-decoration: none; float: right; }
+    body {
+      font-family: sans-serif;
+    }
+
+    h1,
+    h2 {
+      text-align: center;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 5px;
+    }
+
+    .remove-button {
+      background-color: #f44336;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      text-decoration: none;
+      float: right;
+    }
   </style>
 </head>
+
 <body>
   <h1>Task Manager</h1>
 
@@ -78,16 +125,16 @@
     const taskSpecificFieldsDiv = document.getElementById('task_specific_fields');
 
     taskTypeSelect.addEventListener('change', () => {
-        const selectedTaskType = taskTypeSelect.value;
-        taskSpecificFieldsDiv.innerHTML = '';
+      const selectedTaskType = taskTypeSelect.value;
+      taskSpecificFieldsDiv.innerHTML = '';
 
-        if (selectedTaskType === 'organize_files') {
-            taskSpecificFieldsDiv.innerHTML = `
+      if (selectedTaskType === 'organize_files') {
+        taskSpecificFieldsDiv.innerHTML = `
                 <label for="directory">Directory:</label>
                 <input type="text" id="directory" name="directory" required>
             `;
-        } else if (selectedTaskType === 'delete_files') {
-            taskSpecificFieldsDiv.innerHTML = `
+      } else if (selectedTaskType === 'delete_files') {
+        taskSpecificFieldsDiv.innerHTML = `
                 <label for="directory">Directory:</label>
                 <input type="text" id="directory" name="directory" required><br>
                 <label for="age_days">Age (Days):</label>
@@ -95,19 +142,23 @@
                 <label for="formats">Formats (comma-separated):</label>
                 <input type="text" id="formats" name="formats" required>
             `;
-        } else if (selectedTaskType === 'send_email') {
-            taskSpecificFieldsDiv.innerHTML = `
+      } else if (selectedTaskType === 'send_email') {
+        taskSpecificFieldsDiv.innerHTML = `
                 <label for="recipient_email">Recipient Email:</label>
-                <input type="email" id="recipient_email" name="recipient_email" required><br>
+                <input type="email" id="recipient_email" name="recipient_email"><br>
+                <label for="recipient_file">Recipient File:</label>
+                <input type="file" id="recipient_file" name="recipient_file"><br>
                 <label for="subject">Subject:</label>
                 <input type="text" id="subject" name="subject" required><br>
                 <label for="message">Message:</label>
-                <textarea id="message" name="message" required></textarea><br>
+                <textarea id="message" name="message"></textarea><br>
+                <label for="message_file">Message File:</label>
+                <input type="file" id="message_file" name="message_file"><br>
                 <label for="attachments">Attachments:</label>
                 <input type="file" id="attachments" name="attachments" multiple>
             `;
-        } else if (selectedTaskType === 'convert_file') {
-            taskSpecificFieldsDiv.innerHTML = `
+      } else if (selectedTaskType === 'convert_file') {
+        taskSpecificFieldsDiv.innerHTML = `
                 <label for="input_dir">Input Directory:</label>
                 <input type="text" id="input_dir" name="input_dir" required><br>
                 <label for="output_dir">Output Directory:</label>
@@ -117,8 +168,8 @@
                 <label for="output_format">Output Format:</label>
                 <input type="text" id="output_format" name="output_format" required>
             `;
-        } else if (selectedTaskType === 'compress_files') {
-            taskSpecificFieldsDiv.innerHTML = `
+      } else if (selectedTaskType === 'compress_files') {
+        taskSpecificFieldsDiv.innerHTML = `
                 <label for="directory">Directory:</label>
                 <input type="text" id="directory" name="directory" required><br>
                 <label for="output_dir">Output Directory:</label>
@@ -129,8 +180,9 @@
                     <option value="tar">TAR</option>
                 </select>
             `;
-        }
+      }
     });
+
 
     function showAddTaskForm() {
       document.getElementById('add_task_form').style.display = 'block';

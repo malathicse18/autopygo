@@ -143,7 +143,15 @@ class TaskManager:
             self.logger.error("Missing email credentials in .env file.")
             return False
 
+        # Log the email details (Improved logging)
+        self.logger.info(f"Sending email(s) with the following details:")
+        self.logger.info(f"  To: {recipient_email}")
+        self.logger.info(f"  Subject: {subject}")
+        self.logger.info(f"  Message: {message}")
+        self.logger.info(f"  Attachments: {attachments}")
+
         if isinstance(recipient_email, str) and (recipient_email.endswith(".csv") or recipient_email.endswith(".xlsx")):
+            # Handle CSV or XLSX file
             try:
                 if recipient_email.endswith(".csv"):
                     df = pd.read_csv(recipient_email)
@@ -160,33 +168,51 @@ class TaskManager:
 
                 for index, row in df.iterrows():
                     email = row.get("email")
-                    name = row.get("name", "")
+                    name = row.get("name", "")  # Get name, default to empty string if not found
                     if not self.is_valid_email(email):
                         self.logger.warning(f"Invalid email: {email}")
-                        self.log_to_mongodb("send_email", {"recipient": email}, "Invalid email", level="WARNING")
                         continue
                     msg_content = message_template.replace("{name}", name)
-                    if self._send_single_email(email, subject, msg_content, attachments):
-                        self.log_to_mongodb("send_email", {"recipient": email, "subject": subject}, "Email sent")
+                    if self._send_single_email([email], subject, msg_content, attachments):
+                        self.logger.info(f"Email sent to {email}")
                     else:
-                        self.log_to_mongodb("send_email", {"recipient": email, "subject": subject}, "Email failed", level="ERROR")
+                        self.logger.error(f"Email failed to {email}")
 
             except Exception as e:
                 self.logger.error(f"Error sending emails from file: {e}")
-                self.log_to_mongodb("send_email", {"email_list": recipient_email, "message": message, "subject": subject, "attachments": attachments}, f"Error: {e}", level="ERROR")
-                return False
-        else:
-            if self._send_single_email(recipient_email, subject, message, attachments):
-                self.logger.info(f"Email sent to {recipient_email}")
-                self.log_to_mongodb("send_email", {"recipient": recipient_email, "subject": subject}, "Email sent")
-                return True
-            else:
-                self.logger.error(f"Failed to send email to {recipient_email}")
-                self.log_to_mongodb("send_email", {"recipient": recipient_email, "subject": subject}, "Email failed", level="ERROR")
                 return False
 
-    def _send_single_email(self, recipient_email, subject, message, attachments=None):
-        """Helper method to send a single email."""
+        else:
+            # Handle list or string of email addresses
+            if isinstance(recipient_email, str):
+                recipient_email = [email.strip() for email in recipient_email.split(",")]
+            elif not isinstance(recipient_email, list):
+                self.logger.error("Invalid recipient_email format. Expected a string or list.")
+                return False
+
+            # Filter out invalid email addresses
+            valid_emails = [email for email in recipient_email if self.is_valid_email(email)]
+            invalid_emails = [email for email in recipient_email if not self.is_valid_email(email)]
+
+            if invalid_emails:
+                self.logger.warning(f"Invalid email addresses: {invalid_emails}")
+
+            if not valid_emails:
+                self.logger.error("No valid email addresses found.")
+                return False
+
+            for email in valid_emails:
+                # Simple name extraction (you might need a more robust method)
+                name = email.split("@")[0]
+                msg_content = message.replace("{name}", name)
+
+                if self._send_single_email([email], subject, msg_content, attachments):
+                    self.logger.info(f"Email sent to {email}")
+                else:
+                    self.logger.error(f"Failed to send email to {email}")
+
+    def _send_single_email(self, recipient_emails, subject, message, attachments=None):
+        """Helper method to send a single email to a list of recipients."""
         SENDER_EMAIL = os.getenv("SENDER_EMAIL")
         SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
         if not SENDER_EMAIL or not SENDER_PASSWORD:
@@ -195,7 +221,7 @@ class TaskManager:
 
         msg = MIMEMultipart()
         msg["From"] = SENDER_EMAIL
-        msg["To"] = recipient_email
+        msg["To"] = ", ".join(recipient_emails)
         msg["Subject"] = subject
         msg.attach(MIMEText(message, "plain"))
 
@@ -215,11 +241,11 @@ class TaskManager:
             server = smtplib.SMTP("smtp.gmail.com", 587)
             server.starttls()
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.sendmail(SENDER_EMAIL, recipient_email, msg.as_string())
+            server.sendmail(SENDER_EMAIL, recipient_emails, msg.as_string())
             server.quit()
             return True
         except Exception as e:
-            self.logger.error(f"Failed to send email to {recipient_email}: {e}")
+            self.logger.error(f"Failed to send email to {recipient_emails}: {e}")
             return False
 
     def is_valid_email(self, email):

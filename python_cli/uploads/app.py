@@ -28,6 +28,7 @@ def index():
         if task_type == "organize_files":
             directory = request.form.get("directory")
             manager.add_task(interval, unit, task_type, directory=directory)
+
         elif task_type == "delete_files":
             directory = request.form.get("directory")
             age_days = int(request.form.get("age_days"))
