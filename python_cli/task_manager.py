@@ -1,3 +1,6 @@
+13/3/25 [task_manager.py]v1.0
+================================
+
 import os
 import re
 import shutil
@@ -27,7 +30,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class TaskManager:
-    # ... (rest of the TaskManager class code is the same as before) ...
     def __init__(self):
         """Initialize TaskManager with logging, MongoDB, and scheduler."""
         # Logging Configuration
@@ -373,54 +375,116 @@ class TaskManager:
         except Exception as e:
             self.logger.error(f"Error compressing files: {e}")
             self.log_to_mongodb("compress_files", {"directory": directory, "output": output_dir}, f"Error: {e}", level="ERROR")
+
     def add_task(self, interval, unit, task_type, **kwargs):
         """Add a new task to the scheduler."""
-        tasks = self.load_tasks()
-        filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        new_task_details = {"interval": interval, "unit": unit, "task_type": task_type, **filtered_kwargs}
+        try:
+            # Load existing tasks
+            tasks = self.load_tasks()
 
-        # Check for duplicates
-        for existing_task_details in tasks.values():
-            if existing_task_details == new_task_details:
-                print(f"Task Exists already {existing_task_details}. Task not added.")
-                return
+            # Filter out None values from kwargs
+            filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
-        task_name = f"{task_type}_task_{len(tasks) + 1}"
-        trigger = IntervalTrigger(**{unit: interval})
+            # Create task details dictionary
+            new_task_details = {
+                "interval": interval,
+                "unit": unit,
+                "task_type": task_type,
+                "details": filtered_kwargs  # Store details separately for clarity
+            }
 
-        if task_type == "organize_files":
-            self.scheduler.add_job(self.organize_files, trigger, args=[filtered_kwargs["directory"]], id=task_name)
-        elif task_type == "delete_files":
-            self.scheduler.add_job(self.delete_files, trigger, args=[filtered_kwargs["directory"], filtered_kwargs["age_days"], filtered_kwargs["formats"]], id=task_name)
-        elif task_type == "send_email":
-            attachments = filtered_kwargs.get("attachments", None)
-            self.scheduler.add_job(self.send_email, trigger, args=[filtered_kwargs["recipient_email"], filtered_kwargs["subject"], filtered_kwargs["message"], attachments], id=task_name)
-        elif task_type == "get_gold_rate":
-            self.scheduler.add_job(self.get_gold_rate, trigger, id=task_name)
-        elif task_type == "convert_file":
-            self.scheduler.add_job(
-                self.convert_file,
-                trigger,
-                args=[
-                    filtered_kwargs["input_dir"],
-                    filtered_kwargs["output_dir"],
-                    filtered_kwargs["input_format"],
-                    filtered_kwargs["output_format"],
-                ],
-                id=task_name,
-            )
-        elif task_type == "compress_files":
-            self.scheduler.add_job(self.compress_files, trigger, args=[filtered_kwargs["directory"], filtered_kwargs["output_dir"], filtered_kwargs["compression_format"]], id=task_name)
-        else:
-            raise ValueError("Unsupported task type")
+            # Check for duplicates (compare only essential fields)
+            for existing_task_name, existing_task_details in tasks.items():
+                if (existing_task_details["task_type"] == task_type and
+                    existing_task_details["interval"] == interval and
+                    existing_task_details["unit"] == unit and
+                    existing_task_details["details"] == filtered_kwargs):
+                    print(f"Task already exists: {existing_task_name}. Task not added.")
+                    return
 
-        tasks[task_name] = new_task_details
-        self.save_tasks(tasks)
-        self.logger.info(f"Added task '{task_name}'")
-        self.log_to_mongodb("add_task", {"task_name": task_name, "details": tasks[task_name]}, "Task added")
+            # Generate a unique task name
+            task_name = f"{task_type}_task_{int(time.time())}"  # Use timestamp for uniqueness
 
-        print(f"Task '{task_name}' added successfully.")
-        print(f"Task details: {tasks[task_name]}")
+            # Schedule the task based on its type
+            trigger = IntervalTrigger(**{unit: interval})
+
+            if task_type == "organize_files":
+                if "directory" not in filtered_kwargs:
+                    raise ValueError("Directory is required for organizing files.")
+                self.scheduler.add_job(
+                    self.organize_files,
+                    trigger,
+                    args=[filtered_kwargs["directory"]],
+                    id=task_name
+                )
+
+            elif task_type == "delete_files":
+                if "directory" not in filtered_kwargs or "age_days" not in filtered_kwargs or "formats" not in filtered_kwargs:
+                    raise ValueError("Directory, age_days, and formats are required for deleting files.")
+                self.scheduler.add_job(
+                    self.delete_files,
+                    trigger,
+                    args=[filtered_kwargs["directory"], filtered_kwargs["age_days"], filtered_kwargs["formats"]],
+                    id=task_name
+                )
+
+            elif task_type == "send_email":
+                if "recipient_email" not in filtered_kwargs or "subject" not in filtered_kwargs or "message" not in filtered_kwargs:
+                    raise ValueError("Recipient email, subject, and message are required for sending emails.")
+                attachments = filtered_kwargs.get("attachments", None)
+                self.scheduler.add_job(
+                    self.send_email,
+                    trigger,
+                    args=[filtered_kwargs["recipient_email"], filtered_kwargs["subject"], filtered_kwargs["message"], attachments],
+                    id=task_name
+                )
+
+            elif task_type == "get_gold_rate":
+                self.scheduler.add_job(
+                    self.get_gold_rate,
+                    trigger,
+                    id=task_name
+                )
+
+            elif task_type == "convert_file":
+                if ("input_dir" not in filtered_kwargs or "output_dir" not in filtered_kwargs or
+                    "input_format" not in filtered_kwargs or "output_format" not in filtered_kwargs):
+                    raise ValueError("Input directory, output directory, input format, and output format are required for file conversion.")
+                self.scheduler.add_job(
+                    self.convert_file,
+                    trigger,
+                    args=[filtered_kwargs["input_dir"], filtered_kwargs["output_dir"], filtered_kwargs["input_format"], filtered_kwargs["output_format"]],
+                    id=task_name
+                )
+
+            elif task_type == "compress_files":
+                if "directory" not in filtered_kwargs or "output_dir" not in filtered_kwargs or "compression_format" not in filtered_kwargs:
+                    raise ValueError("Directory, output directory, and compression format are required for file compression.")
+                self.scheduler.add_job(
+                    self.compress_files,
+                    trigger,
+                    args=[filtered_kwargs["directory"], filtered_kwargs["output_dir"], filtered_kwargs["compression_format"]],
+                    id=task_name
+                )
+
+            else:
+                raise ValueError(f"Unsupported task type: {task_type}")
+
+            # Save the task
+            tasks[task_name] = new_task_details
+            self.save_tasks(tasks)
+
+            # Log the task addition
+            self.logger.info(f"Added task '{task_name}'")
+            self.log_to_mongodb("add_task", {"task_name": task_name, "details": new_task_details}, "Task added")
+
+            print(f"Task '{task_name}' added successfully.")
+            print(f"Task details: {new_task_details}")
+
+        except Exception as e:
+            self.logger.error(f"Error adding task: {e}")
+            self.log_to_mongodb("add_task", {"error": str(e)}, "Task addition failed", level="ERROR")
+            print(f"Error adding task: {e}")
 
     def remove_task(self, task_name):
         """Remove a task from the scheduler."""
