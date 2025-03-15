@@ -570,7 +570,7 @@ Available tasks:
 
     send_email: Send an email.
     
-    get_gold_rate: Scrape and store gold rates.
+    get_gold_rate: Scrape and store 22K gold rates in India.
 
     convert_file: Convert files in a directory. Supported conversions:
         - txt to csv

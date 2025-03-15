@@ -122,83 +122,83 @@
 </head>
 
 <body>
-    <h1>Task Manager</h1>
+  <h1>Task Manager</h1>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div id="add_task_successfully" class="message {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+          {% for category, message in messages %}
+              <div id="add_task_successfully" class="message {{ category }}">{{ message }}</div>
+          {% endfor %}
+      {% endif %}
+  {% endwith %}
 
-    <div id="actions">
-        <button onclick="showAddTaskForm()">Add Task</button>
-        <button onclick="showListTasks()">List Tasks</button>
-        <button onclick="showRemoveTaskForm()">Remove Task</button>
-    </div>
+  <div id="actions">
+      <button onclick="showAddTaskForm()">Add Task</button>
+      <button onclick="showListTasks()">List Tasks</button>
+      <button onclick="showRemoveTaskForm()">Remove Task</button>
+  </div>
 
-    <div id="add_task_form">
-        <h2>Add New Task</h2>
-        <form id="add_task" method="POST" action="/" enctype="multipart/form-data" onsubmit="return validateForm()">
-            <label for="task_type">Task Type:</label>
-            <select id="task_type" name="task_type" required>
-                <option value="organize_files">Organize Files</option>
-                <option value="delete_files">Delete Files</option>
-                <option value="send_email">Send Email</option>
-                <option value="get_gold_rate">Get Gold Rate</option>
-                <option value="convert_file">Convert File</option>
-                <option value="compress_files">Compress Files</option>
-            </select>
+  <div id="add_task_form">
+      <h2>Add New Task</h2>
+      <form id="add_task" method="POST" action="/index" enctype="multipart/form-data" onsubmit="return validateForm()">
+          <label for="task_type">Task Type:</label>
+          <select id="task_type" name="task_type" required>
+              <option value="organize_files">Organize Files</option>
+              <option value="delete_files">Delete Files</option>
+              <option value="send_email">Send Email</option>
+              <option value="get_gold_rate">Get Gold Rate</option>
+              <option value="convert_file">Convert File</option>
+              <option value="compress_files">Compress Files</option>
+          </select>
 
-            <label for="interval">Interval:</label>
-            <input type="number" id="interval" name="interval" value="1" min="1" required>
+          <label for="interval">Interval:</label>
+          <input type="number" id="interval" name="interval" value="1" min="1" required>
 
-            <label for="unit">Unit:</label>
-            <select id="unit" name="unit" required>
-                <option value="seconds">Seconds</option>
-                <option value="minutes">Minutes</option>
-                <option value="hours">Hours</option>
-                <option value="days">Days</option>
-            </select>
+          <label for="unit">Unit:</label>
+          <select id="unit" name="unit" required>
+              <option value="seconds">Seconds</option>
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+          </select>
 
-            <div id="task_specific_fields"></div>
+          <div id="task_specific_fields"></div>
 
-            <button type="submit">Add Task</button>
-        </form>
-    </div>
+          <button type="submit">Add Task</button>
+      </form>
+  </div>
 
-    <div id="list_tasks">
-        <h2>Scheduled Tasks</h2>
-        <ul id="task_list">
-            {% if tasks %}
-                {% for task_name, task_details in tasks.items() %}
-                    <li>
-                        <strong>{{ task_name }}</strong><br>
-                        Type: {{ task_details["task_type"] }}<br>
-                        Interval: {{ task_details["interval"] }} {{ task_details["unit"] }}<br>
-                        Details:
-                        <ul>
-                            {% for key, value in task_details.items() if key not in ["task_type", "interval", "unit"] %}
-                                <li>{{ key }}: {{ value }}</li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                {% endfor %}
-            {% else %}
-                <li>No tasks scheduled.</li>
-            {% endif %}
-        </ul>
-    </div>
+  <div id="list_tasks">
+      <h2>Scheduled Tasks</h2>
+      <ul id="task_list">
+          {% if tasks %}
+              {% for task_name, task_details in tasks.items() %}
+                  <li>
+                      <strong>{{ task_name }}</strong><br>
+                      Type: {{ task_details["task_type"] }}<br>
+                      Interval: {{ task_details["interval"] }} {{ task_details["unit"] }}<br>
+                      Details:
+                      <ul>
+                          {% for key, value in task_details.items() if key not in ["task_type", "interval", "unit"] %}
+                              <li>{{ key }}: {{ value }}</li>
+                          {% endfor %}
+                      </ul>
+                  </li>
+              {% endfor %}
+          {% else %}
+              <li>No tasks scheduled.</li>
+          {% endif %}
+      </ul>
+  </div>
 
-    <div id="remove_task_form">
-        <h2>Remove Task</h2>
-        <form id="remove_task" method="GET" action="/remove_task/">
-            <label for="task_name">Task Name:</label>
-            <input type="text" id="task_name" name="task_name" required>
-            <button type="submit">Remove Task</button>
-        </form>
-    </div>
+  <div id="remove_task_form">
+      <h2>Remove Task</h2>
+      <form id="remove_task" method="GET" action="/remove_task/">
+          <label for="task_name">Task Name:</label>
+          <input type="text" id="task_name" name="task_name" required>
+          <button type="submit">Remove Task</button>
+      </form>
+  </div>
 
     <script>
         const taskTypeSelect = document.getElementById('task_type');

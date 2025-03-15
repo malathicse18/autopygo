@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages
 from task_manager import TaskManager  # Assuming you have task_manager.py
 import os
@@ -28,7 +29,12 @@ def start_scheduler():
 scheduler_thread = threading.Thread(target=start_scheduler, daemon=True)
 scheduler_thread.start()
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
+def home():
+    """Renders the home page."""
+    return render_template("home.html")
+
+@app.route("/index", methods=["GET", "POST"])
 def index():
     """Handle the main page and task submission."""
     if request.method == "POST":
@@ -170,7 +176,6 @@ def index():
 
     return render_template("index.html", tasks=tasks)
 
-
 @app.route("/remove_task/", methods=["GET"])
 def remove_task():
     """Remove a task by its name."""
@@ -185,4 +190,4 @@ def remove_task():
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    app.run(debug=True)  # Enable debug mode for development
+    app.run(debug=False)  # Enable debug mode for development
