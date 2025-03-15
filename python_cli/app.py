@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages
 from task_manager import TaskManager  # Assuming you have task_manager.py
 import os
 import threading
@@ -33,22 +33,16 @@ def index():
     """Handle the main page and task submission."""
     if request.method == "POST":
         try:
-            task_name = request.form.get("task_name")  # Ensure task_name is included in the form
             task_type = request.form.get("task_type")
             interval = int(request.form.get("interval"))
             unit = request.form.get("unit")
-
-            # Check if the task already exists
-            if manager.task_exists(task_name):
-                flash(f"Task '{task_name}' already exists!", "error")
-                return redirect(url_for("index"))
 
             if task_type == "organize_files":
                 directory = request.form.get("directory")
                 if not directory:
                     flash("Directory is required for organizing files.", "error")
                     return redirect(url_for("index"))
-                manager.add_task(task_name, interval, unit, task_type, directory=directory)
+                manager.add_task(interval, unit, task_type, directory=directory)
 
             elif task_type == "delete_files":
                 directory = request.form.get("directory")
@@ -57,7 +51,7 @@ def index():
                 if not directory or not formats:
                     flash("Directory and formats are required for deleting files.", "error")
                     return redirect(url_for("index"))
-                manager.add_task(task_name, interval, unit, task_type, directory=directory, age_days=age_days, formats=formats)
+                manager.add_task(interval, unit, task_type, directory=directory, age_days=age_days, formats=formats)
 
             elif task_type == "send_email":
                 recipient_file = request.files.get("recipient_file")
@@ -109,7 +103,6 @@ def index():
                             flash(f"Failed to save attachment: {e}", "error")
 
                 manager.add_task(
-                    task_name,
                     interval,
                     unit,
                     task_type,
@@ -120,7 +113,7 @@ def index():
                 )
 
             elif task_type == "get_gold_rate":
-                manager.add_task(task_name, interval, unit, task_type)
+                manager.add_task(interval, unit, task_type)
 
             elif task_type == "convert_file":
                 input_dir = request.form.get("input_dir")
@@ -131,7 +124,6 @@ def index():
                     flash("All fields are required for file conversion.", "error")
                     return redirect(url_for("index"))
                 manager.add_task(
-                    task_name,
                     interval,
                     unit,
                     task_type,
@@ -149,7 +141,6 @@ def index():
                     flash("All fields are required for file compression.", "error")
                     return redirect(url_for("index"))
                 manager.add_task(
-                    task_name,
                     interval,
                     unit,
                     task_type,
@@ -167,7 +158,18 @@ def index():
             return redirect(url_for("index"))
 
     tasks = manager.load_tasks()
+
+    # Clear flashed messages *before* rendering the template
+    get_flashed_messages()
+    messages = get_flashed_messages(with_categories=True)
+    print(f"Before clearing: Flashed messages: {messages}")
+
+    # Clear flashed messages
+    cleared_messages = get_flashed_messages()
+    print(f"After clearing: Cleared messages: {cleared_messages}")
+
     return render_template("index.html", tasks=tasks)
+
 
 @app.route("/remove_task/", methods=["GET"])
 def remove_task():

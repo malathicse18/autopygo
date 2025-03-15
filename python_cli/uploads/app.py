@@ -1,7 +1,3 @@
-13/3/25 [app.py.py] v1.0
-==========================
-
-
 from flask import Flask, render_template, request, redirect, url_for, flash
 from task_manager import TaskManager  # Assuming you have task_manager.py
 import os
@@ -37,9 +33,15 @@ def index():
     """Handle the main page and task submission."""
     if request.method == "POST":
         try:
+            task_name = request.form.get("task_name")
             task_type = request.form.get("task_type")
             interval = int(request.form.get("interval"))
             unit = request.form.get("unit")
+
+            # Check if the task already exists
+            if manager.task_exists(task_name):  # Now this will work
+                flash(f"Task '{task_name}' already exists!", "error")
+                return redirect(url_for("index"))
 
             if task_type == "organize_files":
                 directory = request.form.get("directory")

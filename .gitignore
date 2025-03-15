@@ -7,8 +7,9 @@ venv/
 # Ignore log files
 *.log
 
-# Ignore CSV files
+# Ignore CSV and XLSX files
 *.csv
+*.xlsx
 # Ignore Python bytecode cache
 python_cli/__pycache__/
 
