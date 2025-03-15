@@ -10,8 +10,17 @@ venv/
 # Ignore CSV and XLSX files
 *.csv
 *.xlsx
+
 # Ignore Python bytecode cache
 python_cli/__pycache__/
 
 # Ignore specific file inside uploads folder
 python_cli/uploads/*
+
+# Ignore .mod, .sum, and .json files
+*.mod
+*.sum
+*.json
+
+# Ignore output folder
+output/
