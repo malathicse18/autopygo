@@ -1,74 +1,101 @@
-# AutoPyGo: Automated Task Management
+# **AutoPyGo: Automated Task Management 🚀**  
 
-AutoPyGo is a versatile application that combines Python and Go tools to automate various tasks, fetch logs, and provide a user-friendly web-based task scheduler dashboard.
+AutoPyGo is a versatile application that combines **Python** and **Go** tools to automate tasks, fetch logs, and provide a user-friendly **web-based task scheduler**.  
 
-## Overview
+## **Overview**  
 
-AutoPyGo offers:
+### ✨ Features  
+- **Python CLI (Task Manager):** Automate tasks like file organization, email sending, and more via the command line.  
+- **Go CLI (Log Fetcher):** Efficiently retrieve logs using a fast Go-based tool.  
+- **Web Dashboard:** Schedule, monitor, and manage automated tasks through an intuitive web interface.  
+- **Task Logging:** Track execution history.  
+- **Flexible File Handling:** Process CSV, Excel, and text files.  
 
-* **Python CLI (Task Manager):** Automate tasks like file organization, email sending, and more via the command line.
-* **Go CLI (Log Fetcher):** Efficiently retrieve logs using a fast Go-based tool.
-* **Web Dashboard:** Schedule, monitor, and manage automated tasks through an intuitive web interface.
+---
 
-## Getting Started
+## **Getting Started**  
 
-1.  **Clone the Repository:**
+### **1️⃣ Clone the Repository**  
+```bash
+git clone <repository-url>
+cd autopygo
+```
+### **2️⃣ Set Up Python Environment**  
+Follow these steps to set up the Python virtual environment and install dependencies:  
 
-    ```bash
-    git clone <repository-url>
-    cd autopygo
-    ```
+1. **Create a Virtual Environment:**  
+   ```bash
+   python -m venv venv
+2. **Activate the Virtual Environment:**
+For macOS/Linux:
+```bash
+source venv/bin/activate
+```
+For Windows:
+```
+venv\Scripts\activate
+```
+3. **Install Required Dependencies:**
+```
+pip install -r python_cli/requirements.txt
+```
+### **3️⃣ Build Go CLI**  
+Follow these steps to set up and build the Go CLI:  
 
-2.  **Set up Python Environment:**
+1. **Navigate to the `go_cli` Directory:**  
+   ```bash
+   cd go_cli
+   ```
+2. **Initialize the Go Module:**
+```
+go mod init go_cli
+```
+3. **Tidy Up Dependencies:**
+```
+go mod tidy
+```
+### **4️⃣ Run the Application**  
+Once the setup is complete, you can start the application using the following command:  
 
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # macOS/Linux
-    venv\Scripts\activate     # Windows
-    pip install -r python_cli/requirements.txt
-    ```
+```bash
+python main_menu.py
+```
+This will launch the main menu, where you can choose from different options:
 
-3.  **Build Go CLI:**
+### **How to Use**
+Main Menu Options
 
-    ```bash
-    cd go_cli
-    go mod go_cli
-    go mod tidy
-    ```
+1️⃣ Launch Python CLI Task Manager
 
-4.  **Run the Application:**
+2️⃣ Launch Go CLI Log Fetcher
 
-    ```bash
-    python main_menu.py
-    ```
+3️⃣ Start Web Dashboard (http://127.0.0.1:5000/)
 
-## How to Use
+4️⃣ Exit
 
-1.  **Run the Main Menu:**
+Your application is now up and running! 🚀
+## **Python CLI (Task Manager)**  
+- Automate **file organization, email sending,** and other tasks.  
+- Run the following command to see available commands:  
+  ```bash
+  python python_cli/task_manager.py --h
+## **Go CLI (Log Fetcher)**  
+- Fetch logs from a **MongoDB database** efficiently.  
+- Run the following command to execute the log fetcher:  
 
-    ```bash
-    python main_menu.py
-    ```
+  ```bash
+  go run go_cli/main.go
 
-2.  **Choose an Option:**
 
-    * `1`: Launch the Python CLI task manager.
-    * `2`: Launch the Go CLI log fetcher.
-    * `3`: Start the web dashboard (http://127.0.0.1:5000/).
-    * `4`: Exit.
+## **Web Dashboard 🌐**  
 
-### Python CLI (Task Manager)
+### **How to Use**  
+1. **Start the Web UI** (`Option 3` in the main menu).  
+2. **Add Tasks:** Fill out the form on the **"Manage Tasks"** page.  
+3. **Remove Tasks:** Delete unwanted scheduled tasks.  
+4. **List Tasks:** View all scheduled tasks.  
+5. **Upload Files:** Upload **CSV, Excel,** or **text files** for automation tasks.  
 
-* Utilize commands to automate file organization, email tasks, and more.
-* Refer to the command-line help for specific instructions.
-
-### Web Dashboard
-
-1.  **Start the Dashboard:** Select option `3` from the main menu.
-2.  **Add Tasks:** Complete the form on the "Manage Tasks" page.
-3.  **Remove Tasks:** Use the remove task feature on the "Manage Tasks" page.
-4.  **List Tasks:** List All Scheduled Tasks
-5.  **Upload Files:** Upload files for email-related tasks.
 
 ### Web Page Descriptions
 
@@ -83,12 +110,23 @@ AutoPyGo offers:
 * **Task Logging:** Track execution of automated tasks.
 * **Flexible File Handling:** Process CSV, Excel, and text files.
 
-## Environment Variables
+## **Environment Variables ⚙️**  
 
-Add your config details to a `.env` file within the `python_cli`and go_cli folder:
+Create a `.env` file inside the `python_cli` and `go_cli` folders with the following configuration details:  
 
-SENDER_EMAIL=dummyemail@example.com  [python_cli]
-SENDER_PASSWORD=dummypassword123     [python_cli]
-MONGO_URI=mongodb://localhost:27017/ [Go and python cli]
-DB_NAME=task_manager_db              [Go and python cli]
-COLLECTION_NAME=logs                 [Go and python cli]
+```ini
+# Python CLI
+SENDER_EMAIL=dummyemail@example.com  
+SENDER_PASSWORD=dummypassword123  
+
+# Go & Python CLI
+MONGO_URI=mongodb://localhost:27017/  
+DB_NAME=task_manager_db  
+COLLECTION_NAME=logs  
+
+
+
+
+
+
+
