@@ -1,215 +1,93 @@
-# Python & Go CLI Project
+# AutoPyGo: Automated Task Management
 
-This project is a command-line interface (CLI) application that integrates Python and Go-based tools for task management, log fetching, and a task scheduler dashboard.
+AutoPyGo is a versatile application that combines Python and Go tools to automate various tasks, fetch logs, and provide a user-friendly web-based task scheduler dashboard.
 
-## Project Overview
+## Overview
 
-The project provides a unified interface to manage tasks, fetch logs, and schedule tasks through a web-based dashboard. It consists of:
+AutoPyGo offers:
 
-* **Python CLI (Task Manager):** A Python-based command-line tool for creating, managing, and scheduling various tasks like file organization, deletion, email sending, gold rate fetching, file conversion, and file compression.
-* **Go CLI (Log Fetcher):** A Go-based command-line tool for fetching logs.
-* **Task Scheduler Dashboard:** A web-based user interface built with Flask for scheduling and monitoring tasks.
+* **Python CLI (Task Manager):** Automate tasks like file organization, email sending, and more via the command line.
+* **Go CLI (Log Fetcher):** Efficiently retrieve logs using a fast Go-based tool.
+* **Web Dashboard:** Schedule, monitor, and manage automated tasks through an intuitive web interface.
 
-├── .gitignore
-├── LICENSE
-├── README.md
-├── go_cli
-    └── main.go
-├── main_menu.py
-└── python_cli
-    ├── app.py
-    ├── requirements.txt
-    ├── task_manager.py
-    └── templates
-        ├── home.html
-        └── index.html
-
-## Setup Instructions
+## Getting Started
 
 1.  **Clone the Repository:**
 
     ```bash
     git clone <repository-url>
-    cd project_root
+    cd autopygo
     ```
 
-2.  **Create and Activate Virtual Environment (For Python CLI):**
+2.  **Set up Python Environment:**
 
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On macOS/Linux
-    venv\Scripts\activate     # On Windows
-    ```
-
-3.  **Install Python Dependencies:**
-
-    ```bash
+    source venv/bin/activate  # macOS/Linux
+    venv\Scripts\activate     # Windows
     pip install -r python_cli/requirements.txt
     ```
 
-4.  **Compile the Go CLI (Log Fetcher):**
+3.  **Build Go CLI:**
 
     ```bash
     cd go_cli
-    go build -o log_fetcher
-    cd ..
+    go mod go_cli
+    go mod tidy
     ```
 
-5.  **Running the Application:**
-
-    To start the project, run the `main_menu.py` script:
+4.  **Run the Application:**
 
     ```bash
     python main_menu.py
     ```
-
-## Features
-
-* **Task Manager (Python CLI):**
-    * Handles task creation, scheduling, and management.
-    * Provides a command-line interface for various tasks:
-        * **File Organization:** Organizes files into directories based on their extensions.
-        * **File Deletion:** Deletes files based on age and format.
-        * **Email Sending:** Sends emails with support for attachments and processing email lists from CSV/XLSX files.
-        * **Gold Rate Fetching:** Fetches gold rates from a website.
-        * **File Conversion:** Converts files between different formats (e.g., txt to csv, txt to pdf, csv to xlsx, docx to pdf).
-        * **File Compression:** Compresses files into zip or tar archives.
-    * Uses `APScheduler` for task scheduling.
-    * Logs task execution details to `task_manager.log` and MongoDB.
-* **Go CLI (Log Fetcher):**
-    * Fetches logs using a Go-based command-line tool.
-    * Provides command line flags for configuring log fetcher.
-* **Task Scheduler Dashboard:**
-    * Web-based user interface using Flask.
-    * Allows scheduling and monitoring tasks through a web browser.
-    * Runs on http://127.0.0.1:5000/
-* **Logging:**
-    * Maintains logs of executed tasks in `task_manager.log` and MongoDB.
-* **File Handling:**
-    * Supports CSV and Excel file processing (`emails.csv`, `gold_rates.xlsx`).
-    * Supports JSON file processing (`scheduled_tasks.json`).
-    * Supports text file processing (`message.txt`).
-* **Environment Configuration:**
-    * Uses `.env` for secure settings.
 
 ## How to Use
 
-1.  **Run the main menu:**
+1.  **Run the Main Menu:**
 
     ```bash
     python main_menu.py
     ```
 
-2.  **Choose an option:**
+2.  **Choose an Option:**
 
-    * `1`: Launch the Python CLI task manager (`task_manager.py`). This will open a new command prompt with the task manager help.
-    * `2`: Launch the Go CLI log fetcher (`go_cli/main.go`). This will open a new command prompt with the go program help.
-    * `3`: Start the Flask web UI (`app.py`) at `http://127.0.0.1:5000/`. This will open a new command prompt with the flask server running.
-    * `4`: Exit the application.
+    * `1`: Launch the Python CLI task manager.
+    * `2`: Launch the Go CLI log fetcher.
+    * `3`: Start the web dashboard (http://127.0.0.1:5000/).
+    * `4`: Exit.
 
-### Using the Python CLI (Task Manager)
+### Python CLI (Task Manager)
 
-(Detailed CLI usage remains the same as in the previous response)
+* Utilize commands to automate file organization, email tasks, and more.
+* Refer to the command-line help for specific instructions.
 
-### Using the Flask Web UI
+### Web Dashboard
 
-The Flask web UI provides a convenient way to manage scheduled tasks through a web browser.
+1.  **Start the Dashboard:** Select option `3` from the main menu.
+2.  **Add Tasks:** Complete the form on the "Manage Tasks" page.
+3.  **Remove Tasks:** Use the remove task feature on the "Manage Tasks" page.
+4.  **Upload Files:** Upload files for email-related tasks.
 
-1.  **Start the Flask app:**
-    * From the main menu, choose option `3`.
-    * Open your web browser and navigate to `http://127.0.0.1:5000/`.
+### Web Page Descriptions
 
-2.  **Adding Tasks:**
-    * Navigate to the "Manage Tasks" page from the home page.
-    * Fill in the task details in the form on the `index.html` page.
-    * Click the "Add Task" button.
-    * The task will be added to the scheduler.
+* **home.html:** Provides an overview of available automated tasks.
+* **index.html:** Enables adding, listing, and removing automated tasks.
 
-3.  **Removing Tasks:**
-    * Navigate to the "Manage Tasks" page.
-    * On the `index.html` page, click the "Remove Task" button.
-    * Enter the task name and click "Remove Task".
-    * The task will be removed from the scheduler.
+## Features
 
-4.  **Uploading Files:**
-    * For the `send_email` task, you can upload recipient lists and attachments using the file upload fields.
-    * Uploaded files are stored in the `python_cli/uploads/` directory.
-
-### HTML templates details
-
-* **home.html:**
-    * This page provides an overview of the available task types.
-    * It contains a list of tasks with descriptions.
-    * It includes a link to the "Manage Tasks" page (`/index`).
-* **index.html:**
-    * This page allows users to add, list, and remove tasks.
-    * It includes a form for adding new tasks with various input fields based on the selected task type.
-    * It displays a list of scheduled tasks.
-    * It includes a form for removing tasks.
-
-## Contribution
-
-Feel free to contribute by submitting issues or pull requests.
-
-## License
-
-This project is licensed under the terms of the LICENSE file.
+* **Automated Task Management:** Schedule and manage a variety of automated tasks.
+* **Efficient Log Fetching:** Quickly retrieve logs.
+* **User-Friendly Web Interface:** Easy-to-use task scheduler.
+* **Task Logging:** Track execution of automated tasks.
+* **Flexible File Handling:** Process CSV, Excel, and text files.
 
 ## Environment Variables
 
-(Environment variable details remain the same as in the previous response)
+Add your config details to a `.env` file within the `python_cli`and go_cli folder:
 
-## Logging
-
-(Logging details remain the same as in the previous response)
-
-## Task Scheduler
-
-(Task scheduler details remain the same as in the previous response)
-
-## File Handling
-
-(File handling details remain the same as in the previous response)
-
-## Flask App Details
-
-(Flask App Details remain the same as in the previous response)
-
-## Testing
-
-(This section will be completed if you have tests)
-
-## Security
-
-(Security details remain the same as in the previous response)
-
-## Platform Specifics
-
-(Platform specifics details remain the same as in the previous response)
-## Environment Variables
-
-To run this project, you will need to add the following environment variables to your .env file
-
-`API_KEY`
-
-`ANOTHER_API_KEY`
-
-
-## Feedback
-
-If you have any feedback, please reach out to us at fake@fake.com
-
-
-## Screenshots
-
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
-
-
-## Running Tests
-
-To run tests, run the following command
-
-```bash
-  npm run test
-```
-
+SENDER_EMAIL=dummyemail@example.com  [python_cli]
+SENDER_PASSWORD=dummypassword123     [python_cli]
+MONGO_URI=mongodb://localhost:27017/ [Go and python cli]
+DB_NAME=task_manager_db              [Go and python cli]
+COLLECTION_NAME=logs                 [Go and python cli]
