@@ -67,7 +67,8 @@ AutoPyGo offers:
 1.  **Start the Dashboard:** Select option `3` from the main menu.
 2.  **Add Tasks:** Complete the form on the "Manage Tasks" page.
 3.  **Remove Tasks:** Use the remove task feature on the "Manage Tasks" page.
-4.  **Upload Files:** Upload files for email-related tasks.
+4.  **List Tasks:** List All Scheduled Tasks
+5.  **Upload Files:** Upload files for email-related tasks.
 
 ### Web Page Descriptions
 
