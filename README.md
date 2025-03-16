@@ -102,13 +102,6 @@ Your application is now up and running! 🚀
 * **home.html:** Provides an overview of available automated tasks.
 * **index.html:** Enables adding, listing, and removing automated tasks.
 
-## Features
-
-* **Automated Task Management:** Schedule and manage a variety of automated tasks.
-* **Efficient Log Fetching:** Quickly retrieve logs.
-* **User-Friendly Web Interface:** Easy-to-use task scheduler.
-* **Task Logging:** Track execution of automated tasks.
-* **Flexible File Handling:** Process CSV, Excel, and text files.
 
 ## **Environment Variables ⚙️**  
 
