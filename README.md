@@ -43,9 +43,9 @@ pip install -r python_cli/requirements.txt
 Follow these steps to set up and build the Go CLI:  
 
 1. **Navigate to the `go_cli` Directory:**  
-   ```bash
-   cd go_cli
-   ```
+```bash
+cd go_cli
+```
 2. **Initialize the Go Module:**
 ```
 go mod init go_cli
