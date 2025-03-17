@@ -1,0 +1,8 @@
+Dear {name},
+
+I hope you're doing well.
+
+This is a test email sent using an automated script. Let me know if you have any questions,feel free to reach out.
+
+Best regards,  
+Malathi K
