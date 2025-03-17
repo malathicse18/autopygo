@@ -54,6 +54,20 @@ go mod init go_cli
 ```
 go mod tidy
 ```
+## **Environment Variables ⚙️**  
+
+Create a `.env` file inside the `python_cli` and `go_cli` folders with the following configuration details:  
+
+```ini
+# Python CLI
+SENDER_EMAIL=dummyemail@example.com  
+SENDER_PASSWORD=dummypassword123  
+
+# Go & Python CLI
+MONGO_URI=mongodb://localhost:27017/  
+DB_NAME=task_manager_db  
+COLLECTION_NAME=logs
+
 ### **4️⃣ Run the Application**  
 Once the setup is complete, you can start the application using the following command:  
 
@@ -103,19 +117,7 @@ Your application is now up and running! 🚀
 * **index.html:** Enables adding, listing, and removing automated tasks.
 
 
-## **Environment Variables ⚙️**  
 
-Create a `.env` file inside the `python_cli` and `go_cli` folders with the following configuration details:  
-
-```ini
-# Python CLI
-SENDER_EMAIL=dummyemail@example.com  
-SENDER_PASSWORD=dummypassword123  
-
-# Go & Python CLI
-MONGO_URI=mongodb://localhost:27017/  
-DB_NAME=task_manager_db  
-COLLECTION_NAME=logs  
 
 
 
