@@ -70,10 +70,15 @@ COLLECTION_NAME=logs
 ```
 
 ### **4️⃣ Run the Application**  
-Once the setup is complete, you can start the application using the following command:  
+Once the setup is complete, you can start the application using the following command:
 
+**For Windows:**
 ```bash
-python main_menu.py
+python main_menu.py 
+```
+**For Linux:**
+```bash
+python3 main_menu.py 
 ```
 This will launch the main menu, where you can choose from different options:
 
