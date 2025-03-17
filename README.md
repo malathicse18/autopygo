@@ -67,6 +67,7 @@ SENDER_PASSWORD=dummypassword123
 MONGO_URI=mongodb://localhost:27017/  
 DB_NAME=task_manager_db  
 COLLECTION_NAME=logs
+```
 
 ### **4️⃣ Run the Application**  
 Once the setup is complete, you can start the application using the following command:  
