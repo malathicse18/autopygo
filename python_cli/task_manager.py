@@ -410,7 +410,7 @@ class TaskManager:
                 )
             ):
                 print(f"Task Exists already {existing_task_details}. Task not added.")
-                return
+                return False  # Indicate task was not added (duplicate)
 
         # Generate a simple task name and handle conflicts
         counter = 1
@@ -455,6 +455,7 @@ class TaskManager:
 
         print(f"Task '{task_name}' added successfully.")
         print(f"Task details: {tasks[task_name]}")
+        return True  # Indicate task was added successfully    
     def remove_task(self, task_name):
         """Remove a task from the scheduler."""
         tasks = self.load_tasks()
