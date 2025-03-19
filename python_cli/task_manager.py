@@ -269,7 +269,7 @@ class TaskManager:
         price_span = soup.find("span", class_="white-space-nowrap")
         if price_span:
             gold_price = price_span.get_text(strip=True)
-            self.logger.info(f"Gold rate: {gold_price}")
+            self.logger.info(f"22k India Gold rate: {gold_price}")
 
             excel_file = "gold_rates.xlsx"
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -277,11 +277,11 @@ class TaskManager:
             try:
                 if os.path.exists(excel_file):
                     df = pd.read_excel(excel_file)
-                    new_row = {"Timestamp": timestamp, "Gold Price": gold_price}
+                    new_row = {"Timestamp": timestamp, "22k India Gold Price": gold_price}
                     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
                     df.to_excel(excel_file, index=False)
                 else:
-                    df = pd.DataFrame({"Timestamp": [timestamp], "Gold Price": [gold_price]})
+                    df = pd.DataFrame({"Timestamp": [timestamp], "22k India Gold Price": [gold_price]})
                     df.to_excel(excel_file, index=False)
             except Exception as e:
                 self.logger.error(f"Error writing to excel file: {e}")

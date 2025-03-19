@@ -199,12 +199,19 @@ def remove_task(task_name):
         # Clear existing flash messages
         session.pop('_flashes', None)
 
-        task_removed = manager.remove_task(task_name.strip())  # Capture the return value
-
-        if task_removed:
+        # task_removed = manager.remove_task(task_name.strip())  # Capture the return value
+        if task_name:
+            if task_name not in manager.load_tasks():
+                flash("Task not found!", "error")
+                return redirect(url_for('index'))
+            task_removed = manager.remove_task(task_name.strip())  # Capture the return value
             flash("Task removed successfully!", "success")
-        else:
-            flash("Task not found!", "error")
+            return redirect(url_for('index'))
+
+        # if task_removed:
+        #     flash("Task removed successfully!", "success")
+        # else:
+        #     flash("Task not found!", "error")
 
     except Exception as e:
         logger.error(f"Error removing task: {e}")
