@@ -1,6 +1,7 @@
 APScheduler
 beautifulsoup4
 certifi
+flask
 charset-normalizer
 python-docx
 et-xmlfile
