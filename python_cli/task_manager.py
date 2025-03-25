@@ -537,6 +537,8 @@ commands:
     start       Start the scheduler. 
             Example usage: python task_manager.py start -h
 
+Units for scheduling: seconds/minutes/Hours/days
+
 For more details on each commands, use the -h option with the subcommand.
     """
     # args = parser.parse_args()
@@ -581,8 +583,6 @@ Available tasks:
         
     compress_files: Compress files in a directory.
                     Compression Format [ZIP/TAR]  
-
-    Units for scheduling: seconds, minutes, days.
 
 Example usage:
 
