@@ -39,11 +39,13 @@ class TaskManager:
         )
         self.logger = logging.getLogger(__name__)
 
-        # MongoDB Configuration
-        self.mongo_uri = "mongodb://localhost:27017/"
-        self.client = MongoClient(self.mongo_uri)
-        self.db = self.client["task_manager_db"]
-        self.logs_collection = self.db["logs"]
+        mongo_host = os.environ.get("MONGO_HOST", "localhost")  # Default to localhost
+        mongo_port = os.environ.get("MONGO_PORT", "27017")
+        mongo_uri = f"mongodb://{mongo_host}:{mongo_port}/"
+
+        client = MongoClient(mongo_uri)
+        db = client["task_manager_db"]
+        logs_collection = db["logs"]
 
         # Scheduler Configuration
         self.scheduler = BackgroundScheduler()

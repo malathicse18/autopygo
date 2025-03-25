@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  go_cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    container_name: go_cli
+    depends_on:
+      - mongodb
+    env_file: ./python_cli/.env # Add this line
+    environment:
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_PORT: ${MONGO_PORT}
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+
+  python_cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: python_cli
+    depends_on:
+      - mongodb
+    env_file: ./python_cli/.env # Add this line
+    environment:
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_PORT: ${MONGO_PORT}
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - "5000:5000"
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    env_file: ./python_cli/.env # Add this line
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}

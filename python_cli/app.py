@@ -234,4 +234,4 @@ def get_flash_messages():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)  # Enable debug mode for development
+     app.run(debug=True, host='0.0.0.0')  # Enable debug mode for development
