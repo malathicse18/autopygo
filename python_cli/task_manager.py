@@ -580,7 +580,9 @@ Available tasks:
         - docx to pdf
         
     compress_files: Compress files in a directory.
-                    Compression Format [ZIP/TAR]   
+                    Compression Format [ZIP/TAR]  
+
+    Units for scheduling: seconds, minutes, days.
 
 Example usage:
 
