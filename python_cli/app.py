@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, flash, jsonify, get_flashed_messages, redirect, url_for, session
 from task_manager import TaskManager  # Ensure task_manager.py exists
 import os
@@ -93,17 +92,27 @@ def index():
                     try:
                         for line in recipient_file.readlines():
                             line = line.strip().decode("utf-8")
-                            recipient_emails.append(line)
+                            parts = line.split(',')  # Split the line by commas
+                            if len(parts) == 2:  # Check if it has both name and email
+                                email = parts[1].strip()  # Extract and clean the email
+                                if manager.is_valid_email(email):
+                                    recipient_emails.append(email)
+                                else:
+                                    logging.warning(f"Invalid email: {email}")  # Log invalid emails
+                            else:
+                                logging.warning(f"Invalid line in recipient file: {line}")  # Log invalid lines
                     except Exception as e:
                         flash(f"Error processing recipient file: {e}", "error")
+                        return render_template("index.html", tasks=tasks, messages=get_flash_messages())
                 else:
                     recipient_email = request.form.get("recipient_email")
                     if recipient_email:
-                        recipient_emails = [recipient_email.strip()]
+                        recipient_emails = [email.strip() for email in recipient_email.split(",") if manager.is_valid_email(email.strip())]
 
                 subject = request.form.get("subject")
                 if not subject:
                     flash("Subject is required for sending emails.", "error")
+                    return render_template("index.html", tasks=tasks, messages=get_flash_messages())
 
                 message_file = request.files.get("message_file")
                 message = ""
@@ -112,6 +121,7 @@ def index():
                         message = message_file.read().decode("utf-8")
                     except UnicodeDecodeError:
                         flash("Unable to decode message file. Check encoding.", "error")
+                        return render_template("index.html", tasks=tasks, messages=get_flash_messages())
                 else:
                     message = request.form.get("message")
 
@@ -127,6 +137,7 @@ def index():
                             attachment_paths.append(filepath)
                         except Exception as e:
                             flash(f"Failed to save attachment: {e}", "error")
+                            return render_template("index.html", tasks=tasks, messages=get_flash_messages())
 
                 if manager.add_task(interval, unit, task_type, recipient_email=recipient_emails, subject=subject, message=message, attachments=attachment_paths):
                     flash("Task added successfully!", "success")
@@ -154,7 +165,18 @@ def index():
                 else:
                     flash("Task already exists!", "error")
 
-            # Compress Files
+            # # Compress Files
+            # elif task_type == "compress_files":
+            #     directory = request.form.get("directory")
+            #     output_dir = request.form.get("output_dir")
+            #     compression_format = request.form.get("compression_format")
+
+            #     if not directory or not output_dir or not compression_format:
+            #         flash("All fields are required for file compression.", "error")
+            #     elif manager.add_task(interval, unit, task_type, directory=directory, output_dir=output_dir, compression_format=compression_format):
+            #         flash("Task added successfully!", "success")
+            #     else:
+            #         flash("Task already exists!", "error")
             elif task_type == "compress_files":
                 directory = request.form.get("directory")
                 output_dir = request.form.get("output_dir")
@@ -162,10 +184,14 @@ def index():
 
                 if not directory or not output_dir or not compression_format:
                     flash("All fields are required for file compression.", "error")
-                elif manager.add_task(interval, unit, task_type, directory=directory, output_dir=output_dir, compression_format=compression_format):
-                    flash("Task added successfully!", "success")
                 else:
-                    flash("Task already exists!", "error")
+                    # Remove extra quotes from output_dir
+                    output_dir = output_dir.strip().strip('"')
+
+                    if manager.add_task(interval, unit, task_type, directory=directory, output_dir=output_dir, compression_format=compression_format):
+                        flash("Task added successfully!", "success")
+                    else:
+                        flash("Task already exists!", "error")
 
             tasks = manager.load_tasks()  # Reload tasks after adding
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -184,8 +210,7 @@ def index():
     messages = get_flash_messages()
     return render_template("index.html", tasks=tasks, messages=messages)
 
-
-@app.route("/remove_task/", defaults={"task_name": None}, methods=["POST"])
+@app.route("/remove_task/", defaults={"task_name":None}, methods=["POST"])
 @app.route("/remove_task/<task_name>", methods=["POST"])
 def remove_task(task_name):
     """Remove a task by its name."""
@@ -199,19 +224,14 @@ def remove_task(task_name):
         # Clear existing flash messages
         session.pop('_flashes', None)
 
-        # task_removed = manager.remove_task(task_name.strip())  # Capture the return value
         if task_name:
-            if task_name not in manager.load_tasks():
+            task_removed = None  # Initialize task_removed here
+            if task_name in manager.load_tasks():
+                task_removed = manager.remove_task(task_name.strip())
+                flash("Task removed successfully!", "success")
+            else:
                 flash("Task not found!", "error")
-                return redirect(url_for('index'))
-            task_removed = manager.remove_task(task_name.strip())  # Capture the return value
-            flash("Task removed successfully!", "success")
             return redirect(url_for('index'))
-
-        # if task_removed:
-        #     flash("Task removed successfully!", "success")
-        # else:
-        #     flash("Task not found!", "error")
 
     except Exception as e:
         logger.error(f"Error removing task: {e}")
