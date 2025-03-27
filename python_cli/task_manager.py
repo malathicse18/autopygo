@@ -31,6 +31,7 @@ load_dotenv()
 class TaskManager:
     def __init__(self):
         """Initialize TaskManager with logging, MongoDB, and scheduler."""
+        self.task_lock = threading.Lock()
         # Logging Configuration
         logging.basicConfig(
             filename="task_manager.log",
@@ -253,47 +254,53 @@ class TaskManager:
         """Validate email format."""
         pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         return re.match(pattern, email) is not None
-
     def get_gold_rate(self):
-        """Scrape gold rates from a website and store in an Excel file."""
+        """Scrape gold rates from a website and store in an Excel file with improved error handling."""
         url = "https://www.bankbazaar.com/gold-rate-tamil-nadu.html"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            self.logger.error(f"Error fetching gold rates: {response.status_code}")
+
+        try:
+            response = requests.get(url, headers=headers, timeout=10) # Added timeout.
+            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+            soup = BeautifulSoup(response.text, "html.parser")
+            price_span = soup.find("span", class_="white-space-nowrap")
+
+            if price_span:
+                gold_price = price_span.get_text(strip=True)
+                self.logger.info(f"22k India Gold rate: {gold_price}")
+
+                excel_file = "gold_rates.xlsx"
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+
+                try:
+                    if os.path.exists(excel_file):
+                        df = pd.read_excel(excel_file)
+                        new_row = {"Timestamp": timestamp, "22k India Gold Price": gold_price}
+                        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                        df.to_excel(excel_file, index=False)
+                    else:
+                        df = pd.DataFrame({"Timestamp": [timestamp], "22k India Gold Price": [gold_price]})
+                        df.to_excel(excel_file, index=False)
+                except Exception as e:
+                    self.logger.error(f"Error writing to excel file: {e}")
+
+                self.logger.info(f"Gold rate stored in {excel_file}")
+                self.log_to_mongodb("get_gold_rate", {"gold_price": gold_price, "timestamp": timestamp}, "Gold rate stored")
+
+                return gold_price
+            else:
+                self.logger.error("Gold price not found on the page.")
+                return None
+
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Error fetching gold rates: {e}")
             return None
-
-        soup = BeautifulSoup(response.text, "html.parser")
-        price_span = soup.find("span", class_="white-space-nowrap")
-        if price_span:
-            gold_price = price_span.get_text(strip=True)
-            self.logger.info(f"22k India Gold rate: {gold_price}")
-
-            excel_file = "gold_rates.xlsx"
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-
-            try:
-                if os.path.exists(excel_file):
-                    df = pd.read_excel(excel_file)
-                    new_row = {"Timestamp": timestamp, "22k India Gold Price": gold_price}
-                    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-                    df.to_excel(excel_file, index=False)
-                else:
-                    df = pd.DataFrame({"Timestamp": [timestamp], "22k India Gold Price": [gold_price]})
-                    df.to_excel(excel_file, index=False)
-            except Exception as e:
-                self.logger.error(f"Error writing to excel file: {e}")
-
-            self.logger.info(f"Gold rate stored in {excel_file}")
-            self.log_to_mongodb("get_gold_rate", {"gold_price": gold_price, "timestamp": timestamp}, "Gold rate stored")
-
-            return gold_price
-        else:
-            self.logger.error("Gold price not found.")
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred: {e}")
             return None
-
     def convert_file(self, input_dir, output_dir, input_format, output_format):
         """Convert files in the input directory to the output directory."""
         try:
@@ -456,20 +463,52 @@ class TaskManager:
         print(f"Task '{task_name}' added successfully.")
         print(f"Task details: {tasks[task_name]}")
         return True  # Indicate task was added successfully    
+    # def remove_task(self, task_name):
+    #     """Remove a task from the scheduler."""
+    #     tasks = self.load_tasks()
+    #     if task_name in tasks:
+    #         self.scheduler.remove_job(task_name)
+    #         del tasks[task_name]
+    #         self.save_tasks(tasks)
+    #         self.logger.info(f"Removed task '{task_name}'")
+    #         self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task removed")
+    #         print(f"Task '{task_name}' removed successfully.")
+    #     else:
+    #         self.logger.warning(f"Task '{task_name}' not found")
+    #         self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task not found", level="WARNING")
     def remove_task(self, task_name):
-        """Remove a task from the scheduler."""
-        tasks = self.load_tasks()
-        if task_name in tasks:
-            self.scheduler.remove_job(task_name)
-            del tasks[task_name]
-            self.save_tasks(tasks)
-            self.logger.info(f"Removed task '{task_name}'")
-            self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task removed")
-            print(f"Task '{task_name}' removed successfully.")
-        else:
-            self.logger.warning(f"Task '{task_name}' not found")
-            self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task not found", level="WARNING")
-
+        """Forcefully remove a task and all pending executions"""
+        with self.task_lock:  # Thread safety
+            # 1. Get the job if it exists
+            job = self.scheduler.get_job(task_name)
+            
+            if job:
+                try:
+                    # 2. Remove from scheduler (force all pending executions)
+                    self.scheduler.remove_job(job.id)
+                    
+                    # 3. Double-check removal
+                    if self.scheduler.get_job(job.id):
+                        self.scheduler._jobstores['default'].remove_job(job.id)
+                    
+                    # 4. Update task storage
+                    tasks = self.load_tasks()
+                    if task_name in tasks:
+                        del tasks[task_name]
+                        self.save_tasks(tasks)
+                    
+                    self.logger.info(f"Force-removed task '{task_name}'")
+                    print(f"Force-removed task '{task_name}'")
+                    return True
+                    
+                except Exception as e:
+                    self.logger.error(f"Failed to remove task {task_name}: {str(e)}")
+                    print(f"Failed to remove task {task_name}: {str(e)}")
+                    return False
+            else:
+                self.logger.warning(f"Task '{task_name}' not found")
+                print(f"Task '{task_name}' not found")
+                return False
     def list_tasks(self):
         """List all scheduled tasks."""
         tasks = self.load_tasks()
