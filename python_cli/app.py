@@ -64,6 +64,7 @@ def index():
                     flash("Directory is required for organizing files.", "error")
                 elif manager.add_task(interval, unit, task_type, directory=directory):
                     flash("Task added successfully!", "success")
+                    manager.log_to_mongodb("add_task", {"task_type": task_type, "directory": directory, "interval": interval, "unit": unit}, "Task added")
                 else:
                     flash("Task already exists!", "error")
 
@@ -80,6 +81,7 @@ def index():
                     formats = formats.split(",")
                     if manager.add_task(interval, unit, task_type, directory=directory, age_days=age_days, formats=formats):
                         flash("Task added successfully!", "success")
+                        manager.log_to_mongodb("add_task", {"task_type": task_type, "directory": directory, "age_days": age_days, "formats": formats, "interval": interval, "unit": unit}, "Task added")
                     else:
                         flash("Task already exists!", "error")
 
@@ -141,6 +143,7 @@ def index():
 
                 if manager.add_task(interval, unit, task_type, recipient_email=recipient_emails, subject=subject, message=message, attachments=attachment_paths):
                     flash("Task added successfully!", "success")
+                    manager.log_to_mongodb("add_task", {"task_type": task_type, "recipient_email": recipient_emails, "subject": subject, "interval": interval, "unit": unit}, "Task added")
                 else:
                     flash("Task already exists!", "error")
 
@@ -148,6 +151,7 @@ def index():
             elif task_type == "get_gold_rate":
                 if manager.add_task(interval, unit, task_type):
                     flash("Task added successfully!", "success")
+                    manager.log_to_mongodb("add_task", {"task_type": task_type, "interval": interval, "unit": unit}, "Task added")
                 else:
                     flash("Task already exists!", "error")
 
@@ -162,21 +166,10 @@ def index():
                     flash("All fields are required for file conversion.", "error")
                 elif manager.add_task(interval, unit, task_type, input_dir=input_dir, output_dir=output_dir, input_format=input_format, output_format=output_format):
                     flash("Task added successfully!", "success")
+                    manager.log_to_mongodb("add_task", {"task_type": task_type, "input_dir": input_dir, "output_dir": output_dir, "input_format": input_format, "output_format": output_format, "interval": interval, "unit": unit}, "Task added")
                 else:
                     flash("Task already exists!", "error")
 
-            # # Compress Files
-            # elif task_type == "compress_files":
-            #     directory = request.form.get("directory")
-            #     output_dir = request.form.get("output_dir")
-            #     compression_format = request.form.get("compression_format")
-
-            #     if not directory or not output_dir or not compression_format:
-            #         flash("All fields are required for file compression.", "error")
-            #     elif manager.add_task(interval, unit, task_type, directory=directory, output_dir=output_dir, compression_format=compression_format):
-            #         flash("Task added successfully!", "success")
-            #     else:
-            #         flash("Task already exists!", "error")
             elif task_type == "compress_files":
                 directory = request.form.get("directory")
                 output_dir = request.form.get("output_dir")
@@ -185,11 +178,11 @@ def index():
                 if not directory or not output_dir or not compression_format:
                     flash("All fields are required for file compression.", "error")
                 else:
-                    # Remove extra quotes from output_dir
                     output_dir = output_dir.strip().strip('"')
 
                     if manager.add_task(interval, unit, task_type, directory=directory, output_dir=output_dir, compression_format=compression_format):
                         flash("Task added successfully!", "success")
+                        manager.log_to_mongodb("add_task", {"task_type": task_type, "directory": directory, "output_dir": output_dir, "compression_format": compression_format, "interval": interval, "unit": unit}, "Task added")
                     else:
                         flash("Task already exists!", "error")
 
@@ -202,6 +195,7 @@ def index():
         except Exception as e:
             logger.error(f"Error adding task: {e}")
             flash(f"Error adding task: {e}", "error")
+            manager.log_to_mongodb("add_task", {"error": str(e)}, "Task add error", level="ERROR")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({"tasks": tasks, "messages": get_flash_messages()})
             else:
@@ -229,6 +223,7 @@ def remove_task(task_name):
             if task_name in manager.load_tasks():
                 task_removed = manager.remove_task(task_name.strip())
                 flash("Task removed successfully!", "success")
+                manager.log_to_mongodb("remove_task", {"task_name": task_name}, "Task removed")
             else:
                 flash("Task not found!", "error")
             return redirect(url_for('index'))
@@ -236,6 +231,7 @@ def remove_task(task_name):
     except Exception as e:
         logger.error(f"Error removing task: {e}")
         flash(f"Error removing task: {e}", "error")
+        manager.log_to_mongodb("remove_task", {"error": str(e)}, "Task remove error", level="ERROR")
 
     tasks = manager.load_tasks()  # Reload tasks after removing
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
