@@ -1,5 +1,5 @@
 ## Branches
 
-### emailfix
-- **Base branch**: `bugfix`
-- **Description**: This branch focuses on fixing email-related bugs and improving email functionality.
+### Testing
+- **Base branch**: `emailfix`
+- **Description**: This branch focuses on Testing task_manager.py

@@ -1,0 +1,138 @@
+# Test Plan for Task Manager
+
+## 1. Introduction
+The purpose of this test plan is to ensure that the `task_manager.py` and app.py script and its Flask interface function as expected. The plan outlines the testing approach, types of tests, specific test scenarios, and detailed test cases.
+
+## 2. Scope
+The Task Manager script provides various functionalities, including:
+- File organization
+- File deletion
+- Email sending
+- Gold rate scraping
+- File conversion
+- File compression
+- Task scheduling
+- MongoDB interaction
+- CLI interface
+- Flask Web Interface
+
+## 3. Objectives
+The primary objectives are:
+- Validate core functionalities.
+- Ensure that scheduled tasks execute correctly.
+- Verify email sending with valid/invalid inputs.
+- Confirm error handling and logging.
+- Validate UI/CLI interactions.
+- Ensure proper MongoDB connections and CRUD operations.
+- Test Flask routes and UI functionality.
+
+## 4. Test Types
+### 4.1 Unit Testing
+Test individual functions for expected behavior.
+### 4.2 Integration Testing
+Test interactions between modules and external APIs.
+### 4.3 Functional Testing
+Ensure all CLI commands and Flask routes execute correctly.
+### 4.4 Error Handling
+Test unexpected inputs and simulate errors to ensure appropriate logging.
+### 4.5 UI/CLI Testing
+Test correct behavior for CLI commands and Flask interface responses.
+### 4.6 Database Testing
+Test MongoDB connections, CRUD operations, and error handling.
+### 4.7 API/Flask Endpoint Testing
+Test HTTP routes, form submissions, and API responses.
+
+## 5. Test Scenarios & Test Cases
+
+### 5.1 Organize Files
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-01 | Organize valid files by extension | 1. Place files in a directory <br> 2. Run `organize_files` | Files are moved to categorized folders |
+| TC-02 | Handle non-existent directory | 1. Provide an invalid directory <br> 2. Run `organize_files` | Logs an error, no crash |
+
+### 5.2 Delete Files
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-03 | Delete files older than specified age | 1. Place old files in a directory <br> 2. Run `delete_files` | Old files are deleted |
+| TC-04 | No matching files to delete | 1. Run `delete_files` with no matching files | Logs "No files deleted" |
+
+### 5.3 Send Email
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-05 | Send email with valid credentials | 1. Set up SMTP details <br> 2. Run `send_email` | Email is sent successfully |
+| TC-06 | Send email with invalid credentials | 1. Provide incorrect SMTP details <br> 2. Run `send_email` | Logs "Email failed" |
+| TC-07 | Send email to a list of recipients | 1. Provide a CSV list <br> 2. Run `send_email` | Emails are sent to all recipients |
+
+### 5.4 Gold Rate Scraping
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-08 | Fetch gold rate successfully | 1. Run `get_gold_rate` | Gold rate is retrieved and saved |
+| TC-09 | Handle HTTP errors | 1. Simulate an HTTP failure <br> 2. Run `get_gold_rate` | Logs "Error fetching gold rates" |
+
+### 5.5 File Conversion
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-10 | Convert text to CSV | 1. Place a `.txt` file in the input folder <br> 2. Run `convert_file` | `.csv` file is created |
+| TC-11 | Convert text to PDF | 1. Place a `.txt` file in the input folder <br> 2. Run `convert_file` | `.pdf` file is created |
+| TC-12 | Handle unsupported formats | 1. Provide an unsupported file type <br> 2. Run `convert_file` | Logs "Unsupported conversion format" |
+
+### 5.6 File Compression
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-13 | Compress files to ZIP | 1. Place files in a directory <br> 2. Run `compress_files` | ZIP file is created |
+| TC-14 | Compress files to TAR | 1. Place files in a directory <br> 2. Run `compress_files` | TAR file is created |
+| TC-15 | Handle non-existent directory | 1. Provide a non-existent directory <br> 2. Run `compress_files` | Logs "Error compressing files" |
+
+### 5.7 Task Management
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-16 | Add a new task | 1. Run `add_task` with parameters | Task is added to scheduler |
+| TC-17 | Remove an existing task | 1. Run `remove_task` with valid ID | Task is removed |
+| TC-18 | List all tasks | 1. Run `list_tasks` | Task list is displayed |
+| TC-19 | Start and stop the scheduler | 1. Run `start_scheduler` <br> 2. Stop execution | Scheduler starts and stops correctly |
+
+### 5.8 MongoDB Interaction
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-20 | Connect to MongoDB | 1. Run MongoDB connection logic | Connection successful |
+| TC-21 | Insert log entry | 1. Call `log_to_mongodb` with valid data | Entry inserted into MongoDB |
+| TC-22 | Handle connection error | 1. Simulate MongoDB server down <br> 2. Run log insertion | Logs error, no crash |
+
+### 5.9 CLI/Command Interface
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-23 | Run CLI command successfully | 1. Run a valid command with arguments | Expected output displayed |
+| TC-24 | Handle invalid CLI command | 1. Run an invalid command | Displays error message |
+
+### 5.10 Flask Web Interface
+| Test Case ID | Description | Steps | Expected Result |
+|-------------|-------------|--------|-----------------|
+| TC-25 | Load home page | 1. Navigate to `/` | Home page is displayed |
+| TC-26 | Add a task through the web form | 1. Fill out task form <br> 2. Submit form | Task added successfully |
+| TC-27 | Remove a task via web interface | 1. Select a task <br> 2. Click remove | Task is removed and list updated |
+| TC-28 | Handle invalid task addition | 1. Submit invalid data <br> 2. Submit form | Error message displayed |
+| TC-29 | Test AJAX-based task listing | 1. Use AJAX to fetch task list | Task list displayed without refreshing |
+| TC-30 | Test form validation errors | 1. Submit an empty form <br> 2. Check for validation messages | Proper error messages displayed |
+| TC-31 | Test task removal with AJAX | 1. Select task for removal <br> 2. Validate success message | Task removed dynamically without page refresh |
+
+## 6. Test Environment
+- Python 3.8+
+- Required dependencies from `requirements.txt`
+- MongoDB server running
+- SMTP server for email
+- CLI terminal for running commands
+- Flask server running (`app.py`)
+
+## 7. Assumptions & Constraints
+- Environment variables (`SENDER_EMAIL`, `SENDER_PASSWORD`) should be correctly configured.
+- Task scheduling will be tested with mock time intervals to speed up tests.
+- MongoDB should be accessible with the correct URI.
+- Flask UI will be tested with `FlaskClient` or Selenium.
+
+## 8. Acceptance Criteria
+- All core functionalities work as expected.
+- No critical errors or crashes.
+- Valid error messages/logs for invalid inputs.
+- UI/CLI behaves as expected.
+- MongoDB operations (insert, read) function correctly.
+- Flask interface handles form submissions, task management, and AJAX requests successfully.
