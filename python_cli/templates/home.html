@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+        .task-item {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .task-item h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .task-item p {
+            color: #666;
+        }
+        .manage-tasks {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .manage-tasks a {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Task Manager</h1>
+        <ul class="task-list">
+            <li class="task-item">
+                <h2>Organize Files</h2>
+                <p>Organize files in a directory.</p>
+                <p><strong>Organization:</strong> Files are categorized into folders based on their extensions:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>File Extensions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Images</td>
+                            <td>.jpg, .jpeg, .png, .gif, .bmp, .tiff, .svg</td>
+                        </tr>
+                        <tr>
+                            <td>Videos</td>
+                            <td>.mp4, .mkv, .flv, .mov, .avi, .wmv</td>
+                        </tr>
+                        <tr>
+                            <td>Documents</td>
+                            <td>.pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .txt</td>
+                        </tr>
+                        <tr>
+                            <td>Audio</td>
+                            <td>.mp3, .wav, .aac, .flac, .ogg</td>
+                        </tr>
+                        <tr>
+                            <td>Archives</td>
+                            <td>.zip, .rar, .tar, .gz, .7z</td>
+                        </tr>
+                        <tr>
+                            <td>Executables</td>
+                            <td>.exe, .msi, .bat, .sh</td>
+                        </tr>
+                        <tr>
+                            <td>Code</td>
+                            <td>.py, .js, .html, .css, .java, .cpp, .c, .php</td>
+                        </tr>
+                        <tr>
+                            <td>Data</td>
+                            <td>.csv, .json, .xml, .sql, .db</td>
+                        </tr>
+                        <tr>
+                            <td>Others</td>
+                            <td>(Files not matching the above categories)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            <li class="task-item">
+                <h2>Delete Files</h2>
+                <p>Delete files older than a specified age from a specified directory, based on file formats.</p>
+            </li>
+            <li class="task-item">
+                <h2>Send Email</h2>
+                <p>Send emails with attachments to designated recipients or attach email files and message file</p>
+                <p>Accepted email file:csv/xlsx</p>
+                <p>Accepted message file:txt</p>
+            </li>
+            <li class="task-item">
+                <h2>Get 22k India Gold Rate</h2>
+                <p>Retrieve and display the current 22k gold rate in India.</p>
+            </li>
+            <li class="task-item">
+                <h2>Convert File</h2>
+                <p>Convert files in a Specified directory.</p>
+                <p><strong>Supported conversions:</strong></p>
+                <ul>
+                    <li>txt to csv</li>
+                    <li>txt to pdf</li>
+                    <li>csv to xlsx</li>
+                    <li>docx to pdf</li>
+                </ul>
+            </li>
+            <li class="task-item">
+                <h2>Compress Files</h2>
+                <p>Compress files in a given directory to a zip or tar archive.</p>
+                <p><strong>Compression Format:</strong> [ZIP/TAR]</p>
+            </li>
+        </ul>
+        <div class="manage-tasks">
+            <a href="/index">Manage Tasks</a>
+        </div>
+    </div>
+</body>
+</html>

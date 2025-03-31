@@ -1,3 +1,4 @@
+# ```python
 import os
 import re
 import shutil
@@ -22,14 +23,15 @@ from pymongo import MongoClient
 from docx import Document
 from fpdf import FPDF
 from dotenv import load_dotenv
+import uuid
 
 # Load environment variables
 load_dotenv()
 
 class TaskManager:
-    # ... (rest of the TaskManager class code is the same as before) ...
     def __init__(self):
         """Initialize TaskManager with logging, MongoDB, and scheduler."""
+        self.task_lock = threading.Lock()
         # Logging Configuration
         logging.basicConfig(
             filename="task_manager.log",
@@ -252,47 +254,53 @@ class TaskManager:
         """Validate email format."""
         pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         return re.match(pattern, email) is not None
-
     def get_gold_rate(self):
-        """Scrape gold rates from a website and store in an Excel file."""
+        """Scrape gold rates from a website and store in an Excel file with improved error handling."""
         url = "https://www.bankbazaar.com/gold-rate-tamil-nadu.html"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            self.logger.error(f"Error fetching gold rates: {response.status_code}")
+
+        try:
+            response = requests.get(url, headers=headers, timeout=10) # Added timeout.
+            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+            soup = BeautifulSoup(response.text, "html.parser")
+            price_span = soup.find("span", class_="white-space-nowrap")
+
+            if price_span:
+                gold_price = price_span.get_text(strip=True)
+                self.logger.info(f"22k India Gold rate: {gold_price}")
+
+                excel_file = "gold_rates.xlsx"
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+
+                try:
+                    if os.path.exists(excel_file):
+                        df = pd.read_excel(excel_file)
+                        new_row = {"Timestamp": timestamp, "22k India Gold Price": gold_price}
+                        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                        df.to_excel(excel_file, index=False)
+                    else:
+                        df = pd.DataFrame({"Timestamp": [timestamp], "22k India Gold Price": [gold_price]})
+                        df.to_excel(excel_file, index=False)
+                except Exception as e:
+                    self.logger.error(f"Error writing to excel file: {e}")
+
+                self.logger.info(f"Gold rate stored in {excel_file}")
+                self.log_to_mongodb("get_gold_rate", {"gold_price": gold_price, "timestamp": timestamp}, "Gold rate stored")
+
+                return gold_price
+            else:
+                self.logger.error("Gold price not found on the page.")
+                return None
+
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Error fetching gold rates: {e}")
             return None
-
-        soup = BeautifulSoup(response.text, "html.parser")
-        price_span = soup.find("span", class_="white-space-nowrap")
-        if price_span:
-            gold_price = price_span.get_text(strip=True)
-            self.logger.info(f"Gold rate: {gold_price}")
-
-            excel_file = "gold_rates.xlsx"
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-
-            try:
-                if os.path.exists(excel_file):
-                    df = pd.read_excel(excel_file)
-                    new_row = {"Timestamp": timestamp, "Gold Price": gold_price}
-                    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-                    df.to_excel(excel_file, index=False)
-                else:
-                    df = pd.DataFrame({"Timestamp": [timestamp], "Gold Price": [gold_price]})
-                    df.to_excel(excel_file, index=False)
-            except Exception as e:
-                self.logger.error(f"Error writing to excel file: {e}")
-
-            self.logger.info(f"Gold rate stored in {excel_file}")
-            self.log_to_mongodb("get_gold_rate", {"gold_price": gold_price, "timestamp": timestamp}, "Gold rate stored")
-
-            return gold_price
-        else:
-            self.logger.error("Gold price not found.")
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred: {e}")
             return None
-
     def convert_file(self, input_dir, output_dir, input_format, output_format):
         """Convert files in the input directory to the output directory."""
         try:
@@ -346,7 +354,6 @@ class TaskManager:
         except Exception as e:
             self.logger.error(f"Error converting files in directory: {e}")
             self.log_to_mongodb("convert_file", {"input_dir": input_dir, "output_dir": output_dir}, f"Error: {e}", level="ERROR")
-
     def compress_files(self, directory, output_dir, compression_format):
         """Compress files in a directory, excluding the output directory."""
         try:
@@ -373,19 +380,53 @@ class TaskManager:
         except Exception as e:
             self.logger.error(f"Error compressing files: {e}")
             self.log_to_mongodb("compress_files", {"directory": directory, "output": output_dir}, f"Error: {e}", level="ERROR")
+
     def add_task(self, interval, unit, task_type, **kwargs):
         """Add a new task to the scheduler."""
         tasks = self.load_tasks()
         filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
         new_task_details = {"interval": interval, "unit": unit, "task_type": task_type, **filtered_kwargs}
 
-        # Check for duplicates
-        for existing_task_details in tasks.values():
-            if existing_task_details == new_task_details:
+        # Check for duplicates based on relevant fields
+        for task_name, existing_task_details in tasks.items():
+            if (
+                existing_task_details["task_type"] == new_task_details["task_type"]
+                and existing_task_details["interval"] == new_task_details["interval"]
+                and existing_task_details["unit"] == new_task_details["unit"]
+                # Add task-specific checks here (example for organize_files):
+                and (
+                    task_type != "organize_files"
+                    or existing_task_details.get("directory") == new_task_details.get("directory")
+                )
+                # Add similar checks for other task types...
+                and (
+                    task_type != "delete_files"
+                    or (existing_task_details.get("directory") == new_task_details.get("directory") and existing_task_details.get("age_days") == new_task_details.get("age_days") and existing_task_details.get("formats") == new_task_details.get("formats"))
+                )
+                and (
+                    task_type != "send_email"
+                    or (existing_task_details.get("recipient_email") == new_task_details.get("recipient_email") and existing_task_details.get("subject") == new_task_details.get("subject") and existing_task_details.get("message") == new_task_details.get("message") and existing_task_details.get("attachments") == new_task_details.get("attachments"))
+                )
+                and (
+                    task_type != "convert_file"
+                    or (existing_task_details.get("input_dir") == new_task_details.get("input_dir") and existing_task_details.get("output_dir") == new_task_details.get("output_dir") and existing_task_details.get("input_format") == new_task_details.get("input_format") and existing_task_details.get("output_format") == new_task_details.get("output_format"))
+                )
+                and (
+                    task_type != "compress_files"
+                    or (existing_task_details.get("directory") == new_task_details.get("directory") and existing_task_details.get("output_dir") == new_task_details.get("output_dir") and existing_task_details.get("compression_format") == new_task_details.get("compression_format"))
+                )
+            ):
                 print(f"Task Exists already {existing_task_details}. Task not added.")
-                return
+                return False  # Indicate task was not added (duplicate)
 
-        task_name = f"{task_type}_task_{len(tasks) + 1}"
+        # Generate a simple task name and handle conflicts
+        counter = 1
+        while True:
+            task_name = f"{task_type}_{counter}"
+            if task_name not in tasks:
+                break
+            counter += 1
+
         trigger = IntervalTrigger(**{unit: interval})
 
         if task_type == "organize_files":
@@ -421,21 +462,53 @@ class TaskManager:
 
         print(f"Task '{task_name}' added successfully.")
         print(f"Task details: {tasks[task_name]}")
-
+        return True  # Indicate task was added successfully    
+    # def remove_task(self, task_name):
+    #     """Remove a task from the scheduler."""
+    #     tasks = self.load_tasks()
+    #     if task_name in tasks:
+    #         self.scheduler.remove_job(task_name)
+    #         del tasks[task_name]
+    #         self.save_tasks(tasks)
+    #         self.logger.info(f"Removed task '{task_name}'")
+    #         self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task removed")
+    #         print(f"Task '{task_name}' removed successfully.")
+    #     else:
+    #         self.logger.warning(f"Task '{task_name}' not found")
+    #         self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task not found", level="WARNING")
     def remove_task(self, task_name):
-        """Remove a task from the scheduler."""
-        tasks = self.load_tasks()
-        if task_name in tasks:
-            self.scheduler.remove_job(task_name)
-            del tasks[task_name]
-            self.save_tasks(tasks)
-            self.logger.info(f"Removed task '{task_name}'")
-            self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task removed")
-            print(f"Task '{task_name}' removed successfully.")
-        else:
-            self.logger.warning(f"Task '{task_name}' not found")
-            self.log_to_mongodb("remove_task", {"task_name": task_name}, "Task not found", level="WARNING")
-
+        """Forcefully remove a task and all pending executions"""
+        with self.task_lock:  # Thread safety
+            # 1. Get the job if it exists
+            job = self.scheduler.get_job(task_name)
+            
+            if job:
+                try:
+                    # 2. Remove from scheduler (force all pending executions)
+                    self.scheduler.remove_job(job.id)
+                    
+                    # 3. Double-check removal
+                    if self.scheduler.get_job(job.id):
+                        self.scheduler._jobstores['default'].remove_job(job.id)
+                    
+                    # 4. Update task storage
+                    tasks = self.load_tasks()
+                    if task_name in tasks:
+                        del tasks[task_name]
+                        self.save_tasks(tasks)
+                    
+                    self.logger.info(f"Force-removed task '{task_name}'")
+                    print(f"Force-removed task '{task_name}'")
+                    return True
+                    
+                except Exception as e:
+                    self.logger.error(f"Failed to remove task {task_name}: {str(e)}")
+                    print(f"Failed to remove task {task_name}: {str(e)}")
+                    return False
+            else:
+                self.logger.warning(f"Task '{task_name}' not found")
+                print(f"Task '{task_name}' not found")
+                return False
     def list_tasks(self):
         """List all scheduled tasks."""
         tasks = self.load_tasks()
@@ -453,7 +526,7 @@ class TaskManager:
         for task_name, details in tasks.items():
             trigger = IntervalTrigger(**{details["unit"]: details["interval"]})
             if details["task_type"] == "organize_files":
-                self.scheduler.add_job(self.organize_files, trigger, args=[details["directory"]], id=task_name)
+                self.scheduler.add_job(self.organize_files, trigger,args=[details["directory"]], id=task_name)
             elif details["task_type"] == "delete_files":
                 self.scheduler.add_job(self.delete_files, trigger, args=[details["directory"], details["age_days"], details["formats"]], id=task_name)
             elif details["task_type"] == "send_email":
@@ -475,50 +548,100 @@ class TaskManager:
             print("Scheduler stopped.")
             self.scheduler.shutdown()
 
+
 # CLI Interface
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Task Manager CLI", formatter_class=argparse.RawTextHelpFormatter)
-    subparsers = parser.add_subparsers(dest="command")
+    parser = argparse.ArgumentParser(description="Python-Task Manager CLI", formatter_class=argparse.RawTextHelpFormatter)
+    usage=argparse.SUPPRESS  # This line removes the "usage:" line
+    # Add a custom help message
+    parser.epilog = """
+*** Available Services for Scheduling ***:
+        - organize_files
+        - delete_files
+        - send_email
+        - get_gold_rate
+        - convert_file
+        - compress_files
+
+commands:
+    add     Add a new task. 
+            Example usage: python task_manager.py add -h
+
+    remove      Remove a task. 
+            Example usage: python task_manager.py remove -h
+
+    list        List all scheduled tasks. 
+            Example usage: python task_manager.py list -h
+
+    start       Start the scheduler. 
+            Example usage: python task_manager.py start -h
+
+Units for scheduling: seconds/minutes/Hours/days
+
+For more details on each commands, use the -h option with the subcommand.
+    """
+    # args = parser.parse_args()
+
+    subparsers = parser.add_subparsers(dest="command",help=argparse.SUPPRESS)
 
     # Add Task Parser
     add_parser = subparsers.add_parser("add", help="Add a new task", formatter_class=argparse.RawTextHelpFormatter)
-    add_parser.add_argument("--interval", type=int, required=True, help="Interval for the task")
-    add_parser.add_argument("--unit", type=str, required=True, choices=["seconds", "minutes", "hours", "days"], help="Time unit for the interval")
-    add_parser.add_argument("--task-type", type=str, required=True, choices=["organize_files", "delete_files", "send_email", "get_gold_rate", "convert_file", "compress_files"], help="Type of task")
-    add_parser.add_argument("--directory", type=str, help="Directory for file tasks")
-    add_parser.add_argument("--age-days", type=int, help="Age in days for file deletion")
-    add_parser.add_argument("--formats", nargs="*", help="File formats for deletion or conversion")
-    add_parser.add_argument("--recipient-email", type=str, help="Recipient email address")
-    add_parser.add_argument("--subject", type=str, help="Email subject")
-    add_parser.add_argument("--message", type=str, help="Email message")
-    add_parser.add_argument("--attachments", nargs="*", help="Email attachments")
-    add_parser.add_argument("--input-dir", type=str, help="Input directory for conversion")
-    add_parser.add_argument("--output-dir", type=str, help="Output directory for conversion")
-    add_parser.add_argument("--input-format", type=str, help="Input file format for conversion")
-    add_parser.add_argument("--output-format", type=str, help="Output file format for conversion")
-    add_parser.add_argument("--compression-format", type=str, choices=["zip", "tar"], help="Compression format (zip or tar)")
-
+    add_parser.add_argument("--interval", type=int, required=True, help=argparse.SUPPRESS)
+    add_parser.add_argument("--unit", type=str, required=True, choices=["seconds", "minutes", "hours", "days"], help=argparse.SUPPRESS)
+    add_parser.add_argument("--task-type", type=str, required=True, choices=["organize_files", "delete_files", "send_email", "get_gold_rate", "convert_file", "compress_files"], help=argparse.SUPPRESS)
+    add_parser.add_argument("--directory", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--age-days", type=int, help=argparse.SUPPRESS)
+    add_parser.add_argument("--formats", nargs="*", help=argparse.SUPPRESS)
+    add_parser.add_argument("--recipient-email", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--subject", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--message", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--attachments", nargs="*", help=argparse.SUPPRESS)
+    add_parser.add_argument("--input-dir", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--output-dir", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--input-format", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--output-format", type=str, help=argparse.SUPPRESS)
+    add_parser.add_argument("--compression-format", type=str, choices=["zip", "tar"], help=argparse.SUPPRESS)
     add_parser.epilog = """
 Available tasks:
 
-  📂 organize_files: Organize files in a directory.
-  🗑️ delete_files: Delete files older than a specified age.
-  📧 send_email: Send an email.
-  🥇 get_gold_rate: Scrape and store gold rates.
-  🔄 convert_file: Convert files in a directory. Supported conversions:
-    - txt to csv
-    - txt to pdf
-    - csv to xlsx
-    - docx to pdf
-  🗜️ compress_files: Compress files in a directory.
+    organize_files: Organize files in a directory.
+                    Organization: Files are categorized into folders based on their extensions:
+                    [Images, Videos, Documents, Audio, Archives, Executables, Code, Data, Others.]
+
+    delete_files: Delete files older than a specified age.
+
+    send_email: Send an email.
+    
+    get_gold_rate: Scrape and store 22K gold rates in India.
+
+    convert_file: Convert files in a directory. Supported conversions:
+        - txt to csv
+        - txt to pdf
+        - csv to xlsx
+        - docx to pdf
+        
+    compress_files: Compress files in a directory.
+                    Compression Format [ZIP/TAR]  
 
 Example usage:
-  organize_files: python task_manager.py add --interval 1 --unit days --task-type organize_files --directory '/path/to/directory'
-  delete_files: python task_manager.py add --interval 1 --unit days --task-type delete_files --directory '/path/to/directory' --age-days 30 --formats .txt .log
-  send_email: python task_manager.py add --interval 1 --unit days --task-type send_email --recipient-email 'recipient@example.com' --subject 'Subject' --message 'Message' --attachments '/path/to/file1.txt' '/path/to/file2.pdf'
-  get_gold_rate: python task_manager.py add --interval 1 --unit hours --task-type get_gold_rate
-  convert_file: python task_manager.py add --interval 1 --unit days --task-type convert_file --input-dir '/path/to/input' --output-dir '/path/to/output' --input-format txt --output-format pdf
-  compress_files: python task_manager.py add --interval 1 --unit days --task-type compress_files --directory '/path/to/directory' --output-dir '/path/to/output' --compression-format zip
+
+    organize_files: 
+                    python task_manager.py add --interval 1 --unit days --task-type organize_files --directory '/path/to/directory'
+
+    delete_files: 
+                    python task_manager.py add --interval 1 --unit days --task-type delete_files --directory '/path/to/directory' --age-days 30 --formats .txt .log
+
+    send_email: 
+                    python task_manager.py add --interval 1 --unit days --task-type send_email --recipient-email 'recipient@example.com' --subject 'Subject' --message 'Message' --attachments '/path/to/file1.txt' '/path/to/file2.pdf'
+
+    get_gold_rate: 
+                    python task_manager.py add --interval 1 --unit hours --task-type get_gold_rate
+
+    convert_file: 
+                    python task_manager.py add --interval 1 --unit days --task-type convert_file --input-dir '/path/to/input' --output-dir '/path/to/output' --input-format txt --output-format pdf
+
+    compress_files: 
+                    python task_manager.py add --interval 1 --unit days --task-type compress_files --directory '/path/to/directory' --output-dir '/path/to/output' --compression-format zip
 """
 
     # Remove Task Parser
@@ -526,34 +649,29 @@ Example usage:
     remove_parser.add_argument("--task-name", type=str, required=True, help="Name of the task to remove (e.g., 'organize_files_task_1')")
     remove_parser.epilog = """
 Example usage:
-  python task_manager.py remove --task-name organize_files_task_1
+    
+    python task_manager.py remove --task-name organize_files_task_1
 """
 
     # List Tasks Parser
     list_parser = subparsers.add_parser("list", help="List all scheduled tasks", formatter_class=argparse.RawTextHelpFormatter)
     list_parser.epilog = """
 Example usage:
-  python task_manager.py list
+    
+    python task_manager.py list
 """
 
     # Start Scheduler Parser
     start_parser = subparsers.add_parser("start", help="Start the scheduler", formatter_class=argparse.RawTextHelpFormatter)
     start_parser.epilog = """
 Example usage:
-  pythonw task_manager.py start
+    
+    *** 3 ways to start ***
+
+    python task_manager.py start [press ctrl+c to stop]
+    pythonw task_manager.py - For no terminal [Get-Process pythonw | Stop-Process -Force] (Windows)
+    python task_manager.py [press ctrl+c to stop]
 """
-
-    # Custom help message
-    parser.epilog = """
-Subcommands:
-  add       Add a new task. Example usage: python task_manager.py add -h
-  remove    Remove a task. Example usage: python task_manager.py remove -h
-  list      List all scheduled tasks. Example usage: python task_manager.py list -h
-  start     Start the scheduler. Example usage: python task_manager.py start -h
-
-For more details on each subcommand, use the -h option with the subcommand.
-"""
-
     # Parse arguments
     args = parser.parse_args()
 
@@ -600,3 +718,5 @@ For more details on each subcommand, use the -h option with the subcommand.
         except KeyboardInterrupt:
             print("Scheduler stopped.")
             manager.scheduler.shutdown()
+
+    
